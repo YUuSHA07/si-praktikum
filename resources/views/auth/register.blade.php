@@ -2,6 +2,13 @@
     <form method="POST" action="{{ route('register') }}">
         @csrf
 
+        <!-- ID-->
+        <div class="mt-4">
+            <x-input-label for="id" :value="__('NIM / NIP')" />
+            <x-text-input id="id" class="block mt-1 w-full" type="text" name="id" :value="old('id')" required />
+            <x-input-error :messages="$errors->get('id')" class="mt-2" />
+        </div>
+
         <!-- Name -->
         <div>
             <x-input-label for="name" :value="__('Name')" />
