@@ -12,11 +12,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-            $table->id();
+            $table->string('id', 20)->primary();
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->enum('role', ['Dosen', 'Mahasiswa', 'Laboran', 'Aslab'])->default('Mahasiswa')
+                ->comment('Role akses pengguna sistem');
+            $table->boolean('is_first_login')->default(true)
+                ->comment('Flag untuk pengecekan login pertama kali');
+            $table->string('avatar')->nullable()
+                ->comment('Path file foto profil pengguna');
             $table->rememberToken();
             $table->timestamps();
         });
