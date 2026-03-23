@@ -5,10 +5,15 @@
     <form method="POST" action="{{ route('login') }}">
         @csrf
 
-        <!-- Email Address -->
+        <!-- Email Address Or ID -->
         <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
+            <x-input-label for="email" :value="__('Email atau ID (NIM/NIP)')" />
+            <x-text-input id="email" class="block mt-1 w-full" 
+                        type="text" {{-- Ubah type dari 'email' ke 'text' agar validasi HTML tidak error saat input ID --}}
+                        name="email" 
+                        :value="old('email')" 
+                        placeholder="Masukkan Email atau ID Anda"
+                        required autofocus autocomplete="username" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
