@@ -12,9 +12,6 @@
                 <div class="p-6 text-gray-900">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-lg font-bold">Upload File Excel</h3>
-                        <a href="{{ route('dashboard') }}" class="text-sm text-gray-600 hover:underline">
-                            &larr; Kembali ke Dashboard
-                        </a>
                     </div>
                     <hr class="mb-6">
 
