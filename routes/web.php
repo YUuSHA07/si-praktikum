@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserImportController;
 use App\Http\Controllers\FirstLoginController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserController;
 
 // 1. Rute Publik
 Route::get('/', function () {
@@ -29,6 +30,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Rute Import (Khusus Laboran)
     Route::get('/import-users', [UserImportController::class, 'showImportForm'])->name('user.import.form');
     Route::post('/import-users', [UserImportController::class, 'import'])->name('user.import');
+
+    // user management (Khusus Admin)
+    Route::get('/users-management', [UserController::class, 'index'])->name('users.index');
+    Route::patch('/users-management/{id}/reset', [UserController::class, 'resetPassword'])->name('users.reset-password');
 });
 
 require __DIR__.'/auth.php';
