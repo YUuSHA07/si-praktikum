@@ -11,16 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('courses', function (Blueprint $table) {
+        Schema::create('course_student', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('semester_id')->constrained()->onDelete('cascade');
-            $table->string('course_name'); // Kecerdasan Buatan
-            $table->string('class_group'); // IK-1
-            $table->integer('target_semester'); // Semester 5
-            $table->foreignId('dosen_id')->constrained('users');
-            $table->foreignId('laboran_id')->constrained('users');
-            $table->foreignId('aslab_id')->constrained('users');
-            $table->string('enrollment_code')->unique();
+            $table->foreignId('course_id')->constrained()->onDelete('cascade');
+            
+            // Perbaikan: Student ID adalah string(20)
+            $table->string('student_id', 20);
+            $table->foreign('student_id')->references('id')->on('users')->onDelete('cascade');
+            
+            $table->timestamp('joined_at')->useCurrent();
             $table->timestamps();
         });
     }

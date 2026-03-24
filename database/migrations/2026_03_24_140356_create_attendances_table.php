@@ -13,10 +13,22 @@ return new class extends Migration
     {
         Schema::create('attendances', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('meeting_id')->constrained()->onDelete('cascade');
-            $table->foreignId('student_id')->constrained('users');
+            
+            // Gunakan unsignedBigInteger untuk ID yang auto-increment (meetings.id)
+            $table->unsignedBigInteger('meeting_id');
+            $table->foreign('meeting_id')
+                ->references('id')
+                ->on('meetings')
+                ->onDelete('cascade');
+            
+            // Gunakan string(20) untuk ID User kamu
+            $table->string('student_id', 20);
+            $table->foreign('student_id')
+                ->references('id')
+                ->on('users');
+            
             $table->enum('status', ['Hadir', 'Sakit', 'Izin', 'Alpha']);
-            $table->date('attendance_date'); // Tanggal absensi dilakukan
+            $table->date('attendance_date');
             $table->timestamps();
         });
     }

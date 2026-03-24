@@ -14,12 +14,20 @@ return new class extends Migration
         Schema::create('courses', function (Blueprint $table) {
             $table->id();
             $table->foreignId('semester_id')->constrained()->onDelete('cascade');
-            $table->string('course_name'); // Kecerdasan Buatan
-            $table->string('class_group'); // IK-1
-            $table->integer('target_semester'); // Semester 5
-            $table->foreignId('dosen_id')->constrained('users');
-            $table->foreignId('laboran_id')->constrained('users');
-            $table->foreignId('aslab_id')->constrained('users');
+            $table->string('course_name');
+            $table->string('class_group');
+            $table->integer('target_semester');
+
+            // Perbaikan: ID User adalah string(20)
+            $table->string('dosen_id', 20);
+            $table->foreign('dosen_id')->references('id')->on('users');
+
+            $table->string('laboran_id', 20);
+            $table->foreign('laboran_id')->references('id')->on('users');
+
+            $table->string('aslab_id', 20);
+            $table->foreign('aslab_id')->references('id')->on('users');
+
             $table->string('enrollment_code')->unique();
             $table->timestamps();
         });

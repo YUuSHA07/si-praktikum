@@ -12,19 +12,20 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('submissions', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('student_id')->constrained('users');
+            $table->id(); // Ini menghasilkan BigInt Unsigned
+            
+            $table->string('student_id', 20); // Sesuaikan PK User Anda
+            $table->foreign('student_id')->references('id')->on('users');
+            
             $table->foreignId('meeting_id')->nullable()->constrained()->onDelete('cascade');
             $table->foreignId('final_task_id')->nullable()->constrained('final_tasks')->onDelete('cascade');
             $table->boolean('is_final')->default(false);
             
-            // Status Workflow
             $table->enum('aslab_status', ['Pending', 'Revisi', 'ACC'])->default('Pending');
             $table->enum('laboran_status', ['Pending', 'Revisi', 'ACC'])->default('Pending');
             $table->enum('dosen_status', ['N/A', 'Pending', 'Revisi', 'ACC'])->default('N/A');
             $table->boolean('is_completed')->default(false);
 
-            // Tracking Tanggal
             $table->dateTime('first_upload_at')->nullable();
             $table->dateTime('last_upload_at')->nullable();
             $table->dateTime('aslab_acc_at')->nullable();
