@@ -12,6 +12,8 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
+    // PENTING: Karena ID Anda adalah string(20)
+    protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';
 
@@ -24,5 +26,12 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_first_login' => 'boolean',
         ];
+    }
+
+    // Relasi: Mahasiswa memiliki banyak kelas
+    public function courses()
+    {
+        return $this->belongsToMany(Course::class, 'course_student', 'student_id', 'course_id')
+                    ->withPivot('joined_at');
     }
 }
