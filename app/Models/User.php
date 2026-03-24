@@ -31,8 +31,7 @@ class User extends Authenticatable
     // Relasi: Mahasiswa memiliki banyak kelas
     public function courses()
     {
-        return $this->belongsToMany(Course::class, 'course_user', 'user_id', 'course_id')
-                    ->withPivot('joined_at');
+        return $this->belongsToMany(Course::class, 'course_user');
     }
 
 }

@@ -7,6 +7,7 @@ use App\Http\Controllers\FirstLoginController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\MeetingController;
 
 // 1. Rute Publik
 Route::get('/', function () {
@@ -43,6 +44,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Route untuk mahasiswa enroll ke kelas (mahasiswa)
     Route::post('/courses/enroll', [CourseController::class, 'enroll'])->name('courses.enroll');
+
+    // Route untuk menambahkan pertemuan ke kelas (aslab)
+    Route::get('/courses/{id}', [MeetingController::class, 'show'])->name('courses.show');
+    Route::post('/courses/{id}/meetings', [MeetingController::class, 'store'])->name('meetings.store');
 });
 
 require __DIR__.'/auth.php';
