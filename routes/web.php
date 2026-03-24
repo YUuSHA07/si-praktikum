@@ -40,6 +40,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
     Route::get('/courses/create', [CourseController::class, 'create'])->name('courses.create');
     Route::post('/courses', [CourseController::class, 'store'])->name('courses.store');
+
+    // Route untuk mahasiswa enroll ke kelas (mahasiswa)
+    Route::post('/courses/enroll', [CourseController::class, 'enroll'])->name('courses.enroll');
 });
 
 require __DIR__.'/auth.php';

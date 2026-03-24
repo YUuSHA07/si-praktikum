@@ -80,4 +80,25 @@ class CourseController extends Controller
 
         return view('courses.create', compact('dosens', 'aslabs'));
     }
+
+    public function enroll(Request $request)
+    {
+        $request->validate([
+            'enrollment_code' => 'required|string|exists:courses,enrollment_code',
+        ]);
+
+        // Cari kelas berdasarkan kode
+        $course = Course::where('enrollment_code', $request->enrollment_code)->first();
+        $user = Auth::user();
+
+        // Cek apakah mahasiswa sudah bergabung di kelas ini sebelumnya
+        if ($user->courses()->where('course_id', $course->id)->exists()) {
+            return redirect()->back()->with('error', 'Kamu sudah terdaftar di kelas ini.');
+        }
+
+        // Gabungkan mahasiswa ke kelas (Insert ke tabel pivot)
+        $user->courses()->attach($course->id);
+
+        return redirect()->route('courses.index')->with('success', 'Berhasil bergabung ke kelas: ' . $course->course_name);
+    }
 }
