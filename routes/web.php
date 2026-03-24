@@ -6,6 +6,7 @@ use App\Http\Controllers\UserImportController;
 use App\Http\Controllers\FirstLoginController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\CourseController;
 
 // 1. Rute Publik
 Route::get('/', function () {
@@ -31,9 +32,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/import-users', [UserImportController::class, 'showImportForm'])->name('user.import.form');
     Route::post('/import-users', [UserImportController::class, 'import'])->name('user.import');
 
-    // user management (Khusus Admin)
+    // user management (Khusus laboran)
     Route::get('/users-management', [UserController::class, 'index'])->name('users.index');
     Route::patch('/users-management/{id}/reset', [UserController::class, 'resetPassword'])->name('users.reset-password');
+
+    // Route Manajemen Kelas (Courses) laboran
+    Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
+    Route::get('/courses/create', [CourseController::class, 'create'])->name('courses.create');
+    Route::post('/courses', [CourseController::class, 'store'])->name('courses.store');
 });
 
 require __DIR__.'/auth.php';

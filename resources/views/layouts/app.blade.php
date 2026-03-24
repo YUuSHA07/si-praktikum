@@ -37,6 +37,14 @@
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
                         Import User
                     </x-nav-link-sidebar>
+                    <x-nav-link-sidebar :href="route('courses.index')" :active="request()->routeIs('courses.index')">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                        Daftar Kelas
+                    </x-nav-link-sidebar>
+                    <x-nav-link-sidebar :href="route('courses.create')" :active="request()->routeIs('courses.create')">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                        Buat Kelas
+                    </x-nav-link-sidebar>
                 @elseif(auth()->user()->role === 'Dosen')
                     <p class="px-4 text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-2">Dosen</p>
                     <x-nav-link-sidebar :href="'#'">Validasi Nilai</x-nav-link-sidebar>
@@ -116,8 +124,13 @@
 
             <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50/50 p-6 md:p-10">
                 <div class="max-w-7xl mx-auto">
-                    {{ $slot }}
-                </div>
+                    @if(session('success'))
+                        <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
+                            {{ session('success') }}
+                        </div>
+                    @endif
+
+                    @yield('content') </div>
             </main>
         </div>
 
