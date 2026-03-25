@@ -9,12 +9,21 @@ use Illuminate\Support\Facades\Auth;
 
 class MeetingController extends Controller
 {
-    // Tambahkan fungsi ini
+    
     public function show($id)
     {
-        $course = Course::with('meetings')->findOrFail($id);
-        $course = Course::with(['meetings', 'laboran', 'dosen', 'aslab'])->findOrFail($id);
-        // Gunakan Auth::user() bukan auth()->user()
+        // 1. Ambil data course beserta relasinya dalam SATU query saja
+        // Kita tambahkan 'meetings.attendances' dengan filter agar hanya mengambil absen milik user yang sedang login
+        $course = Course::with([
+            'laboran', 
+            'dosen', 
+            'aslab', 
+            'meetings.attendances' => function($query) {
+                $query->where('student_id', Auth::id());
+            }
+        ])->findOrFail($id);
+
+        // 2. Cek Akses khusus Mahasiswa
         if (Auth::user()->role === 'Mahasiswa') {
             $isEnrolled = Auth::user()->courses()->where('course_id', $id)->exists();
             if (!$isEnrolled) {

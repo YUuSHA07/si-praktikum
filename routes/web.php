@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\MeetingController;
+use App\Http\Controllers\AttendanceController;
 
 // 1. Rute Publik
 Route::get('/', function () {
@@ -48,6 +49,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Route untuk menambahkan pertemuan ke kelas (aslab)
     Route::get('/courses/{id}', [MeetingController::class, 'show'])->name('courses.show');
     Route::post('/courses/{id}/meetings', [MeetingController::class, 'store'])->name('meetings.store');
+
+    // Route Presensi Aslab
+    Route::get('/meetings/{meeting_id}/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
+    Route::post('/meetings/{meeting_id}/attendance', [AttendanceController::class, 'store'])->name('attendance.store');
+    Route::get('/courses/{course_id}/attendance-report', [AttendanceController::class, 'report'])->name('attendance.report');
 });
 
 require __DIR__.'/auth.php';
