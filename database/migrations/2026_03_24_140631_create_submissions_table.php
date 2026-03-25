@@ -12,20 +12,28 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('submissions', function (Blueprint $table) {
-            $table->id(); // Ini menghasilkan BigInt Unsigned
+            $table->id();
             
-            $table->string('student_id', 20); // Sesuaikan PK User Anda
+            // Relasi ke User (Mahasiswa)
+            $table->string('student_id', 20); 
             $table->foreign('student_id')->references('id')->on('users');
             
+            // Relasi ke Pertemuan
             $table->foreignId('meeting_id')->nullable()->constrained()->onDelete('cascade');
             $table->foreignId('final_task_id')->nullable()->constrained('final_tasks')->onDelete('cascade');
-            $table->boolean('is_final')->default(false);
             
+            // PENYIMPANAN LINK DRIVE (Tambahkan ini)
+            $table->text('submission_link')->nullable(); 
+            $table->text('notes')->nullable(); // Catatan dari mahasiswa
+            
+            // Status Approval
+            $table->boolean('is_final')->default(false);
             $table->enum('aslab_status', ['Pending', 'Revisi', 'ACC'])->default('Pending');
             $table->enum('laboran_status', ['Pending', 'Revisi', 'ACC'])->default('Pending');
             $table->enum('dosen_status', ['N/A', 'Pending', 'Revisi', 'ACC'])->default('N/A');
             $table->boolean('is_completed')->default(false);
 
+            // Timestamps Khusus
             $table->dateTime('first_upload_at')->nullable();
             $table->dateTime('last_upload_at')->nullable();
             $table->dateTime('aslab_acc_at')->nullable();

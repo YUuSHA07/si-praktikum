@@ -9,6 +9,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\SubmissionController;
 
 // 1. Rute Publik
 Route::get('/', function () {
@@ -54,6 +55,27 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/meetings/{meeting_id}/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
     Route::post('/meetings/{meeting_id}/attendance', [AttendanceController::class, 'store'])->name('attendance.store');
     Route::get('/courses/{course_id}/attendance-report', [AttendanceController::class, 'report'])->name('attendance.report');
+
+    // Route untuk simpan tugas oleh (mahasiswa)
+    Route::post('/meetings/{meeting_id}/submit', [SubmissionController::class, 'store'])->name('submissions.store');
+    
+    // Route untuk approval oleh (Aslab/Laboran/Dosen)
+    Route::post('/submissions/{id}/approve', [SubmissionController::class, 'approve'])->name('submissions.approve');
+
+    // Halaman daftar tugas per  (aslab)
+    Route::get('/meetings/{meeting_id}/submissions', [SubmissionController::class, 'index'])->name('submissions.index');
+    // Aksi Approval (sudah kita buat di tahap sebelumnya) aslab
+    Route::post('/submissions/{id}/approve', [SubmissionController::class, 'approve'])->name('submissions.approve');
+
+    // Rute untuk pengiriman pertama kali (Store)
+    Route::post('/submissions/{meeting_id}', [SubmissionController::class, 'store'])->name('submissions.store');
+    // Rute untuk update/revisi (Update)
+    Route::put('/submissions/{id}', [SubmissionController::class, 'update'])->name('submissions.update');
+    // Rute untuk pengiriman tugas (Store)
+    Route::post('/meetings/{meeting_id}/submit', [SubmissionController::class, 'store'])->name('submissions.store');;
+
+    // Halaman Rekap Tugas Mahasiswa
+    Route::get('/my-submissions', [SubmissionController::class, 'mySubmissions'])->name('submissions.my-index');
 });
 
 require __DIR__.'/auth.php';
