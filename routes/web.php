@@ -76,6 +76,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Halaman Rekap Tugas Mahasiswa
     Route::get('/my-submissions', [SubmissionController::class, 'mySubmissions'])->name('submissions.my-index');
+
+    // Route untuk halaman kelola tugas (Satu halaman untuk baru/edit/revisi)
+    Route::get('/mahasiswa/meetings/{meeting}/submission', [SubmissionController::class, 'manage'])
+        ->name('mahasiswa.submissions.manage');
+        
+    // Route untuk simpan data baru
+    Route::post('/mahasiswa/meetings/{meeting}/submit', [SubmissionController::class, 'store'])
+        ->name('meetings.submit');
+
+    // Route untuk update data lama (termasuk kirim revisi)
+    Route::put('/mahasiswa/submissions/{submission}', [SubmissionController::class, 'update'])
+        ->name('submissions.update');
 });
 
 require __DIR__.'/auth.php';
