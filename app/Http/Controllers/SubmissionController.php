@@ -78,32 +78,27 @@ class SubmissionController extends Controller
     /**
      * PROSES: Update atau Kirim Revisi
      */
-    public function update(Request $request, Submission $submission)
+    public function update(Request $request, $id)
     {
-        $request->validate([
-            'submission_link' => 'required|url',
-        ]);
-
-        // Jika statusnya REVISI, pindahkan data lama ke history sebelum ditimpa
-        if ($submission->aslab_status == 'REVISI') {
-            $submission->histories()->create([
-                'submission_link' => $submission->submission_link,
-                'notes'           => $submission->notes,
-                'aslab_notes'     => $submission->aslab_notes,
-                'created_at'      => $submission->updated_at
-            ]);
-        }
+        // Menggunakan with('meeting') untuk memastikan relasi ikut terbawa
+        $submission = Submission::with('meeting')->findOrFail($id);
 
         $submission->update([
             'submission_link' => $request->submission_link,
             'notes'           => $request->notes,
-            'aslab_status'    => 'PENDING', 
-            'aslab_notes'     => null,
+            'aslab_status'    => 'PENDING', // Otomatis kembali ke PENDING
             'last_upload_at'  => now(),
         ]);
 
-        return redirect()->route('courses.show', $submission->meeting->course_id)
-                         ->with('success', 'Tugas berhasil diperbarui.');
+        $meeting = $submission->meeting;
+
+        // Proteksi jika meeting tetap tidak ditemukan
+        if (!$meeting) {
+            return redirect()->back()->with('error', 'Relasi meeting tidak ditemukan. Periksa database.');
+        }
+
+        return redirect()->route('courses.show', $meeting->course_id)
+                        ->with('success', 'Tugas perbaikan berhasil dikirim.');
     }
 
     /**
@@ -111,17 +106,28 @@ class SubmissionController extends Controller
      */
     public function approve(Request $request, $id)
     {
+        // Validasi status agar konsisten (Gunakan Huruf Kapital)
+        $request->validate([
+            'status' => 'required|in:ACC,REVISI',
+        ]);
+
         return DB::transaction(function () use ($request, $id) {
             $submission = Submission::where('id', $id)->lockForUpdate()->firstOrFail();
 
-            if ($submission->aslab_status === $request->status) {
-                return redirect()->back()->with('info', 'Status sudah diperbarui sebelumnya.');
+            // LOGIKA BARU: Jika statusnya REVISI, buat history otomatis
+            if ($request->status === 'REVISI') {
+                SubmissionHistory::create([
+                    'submission_id' => $submission->id,
+                    'drive_link'    => $submission->submission_link, // Simpan link lama sebelum diupdate mahasiswa
+                    'feedback'      => $request->notes,             // Catatan dari aslab
+                    'iteration'     => $submission->histories()->count() + 1,
+                    'reviewed_by'   => Auth::id(),
+                ]);
             }
 
-            // Update status utama
             $submission->update([
-                'aslab_status' => $request->status, // Misal: 'ACC' atau 'REVISI'
-                'aslab_notes'  => $request->notes,  // Catatan feedback aslab
+                'aslab_status' => $request->status,
+                'aslab_notes'  => $request->notes,
                 'updated_at'   => now(),
             ]);
 

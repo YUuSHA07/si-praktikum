@@ -82,10 +82,12 @@
                                     <span class="px-4 py-2 bg-gray-50 text-gray-400 rounded-2xl text-[9px] font-black uppercase border border-dashed border-gray-200">Belum Kumpul</span>
                                 @else
                                     @php
-                                        $statusClass = match($sub->aslab_status) {
-                                            'ACC' => 'bg-emerald-50 text-emerald-600 border-emerald-100',
-                                            'Revisi' => 'bg-red-50 text-red-600 border-red-100',
-                                            default => 'bg-amber-50 text-amber-600 border-amber-100',
+                                        // Gunakan strtoupper untuk keamanan perbandingan string
+                                        $currentStatus = strtoupper($sub->aslab_status);
+                                        $statusClass = match($currentStatus) {
+                                            'ACC'    => 'bg-emerald-50 text-emerald-600 border-emerald-100',
+                                            'REVISI' => 'bg-red-50 text-red-600 border-red-100',
+                                            default  => 'bg-amber-50 text-amber-600 border-amber-100',
                                         };
                                     @endphp
                                     <span class="px-4 py-2 {{ $statusClass }} rounded-2xl text-[9px] font-black uppercase border shadow-sm">
@@ -165,7 +167,8 @@
                         </a>
                         <form id="formApprove" method="POST" class="grid grid-cols-2 gap-4">
                             @csrf
-                            <button type="submit" name="status" value="Revisi" class="py-5 bg-red-50 text-red-600 rounded-[1.5rem] font-black text-[10px] uppercase hover:bg-red-100 transition border border-red-100">Revisi</button>
+                            {{-- Value diganti jadi REVISI (Kapital) --}}
+                            <button type="submit" name="status" value="REVISI" class="py-5 bg-red-50 text-red-600 rounded-[1.5rem] font-black text-[10px] uppercase hover:bg-red-100 transition border border-red-100">Revisi</button>
                             <button type="submit" name="status" value="ACC" class="py-5 bg-emerald-600 text-white rounded-[1.5rem] font-black text-[10px] uppercase hover:bg-emerald-700 shadow-xl shadow-emerald-100 transition">Terima (ACC)</button>
                         </form>
                     </div>
