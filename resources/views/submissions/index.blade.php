@@ -14,7 +14,7 @@
                     Kembali ke Dashboard Course
                 </a>
                 <h2 class="text-3xl font-black text-gray-800 tracking-tight uppercase">Monitoring Presensi & Tugas</h2>
-                <p class="text-[11px] font-bold text-gray-400 mt-1 uppercase tracking-widest">{{ $meeting->course->name }} — Pertemuan #{{ $meeting->meeting_number }}</p>
+                <p class="text-[11px] font-bold text-gray-400 mt-1 uppercase tracking-widest">{{ $meeting->course->course_name }} — Pertemuan #{{ $meeting->meeting_number }}</p>
             </div>
         </div>
 
@@ -66,8 +66,17 @@
                             <tr class="hover:bg-gray-50/50 transition-all group">
                                 <td class="px-8 py-5">
                                     <div class="flex items-center gap-4">
-                                        <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 font-black text-xs shadow-inner">
-                                            {{ strtoupper(substr($student->name, 0, 2)) }}
+                                        {{-- AVATAR DENGAN FALLBACK --}}
+                                        <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center overflow-hidden shadow-inner border border-gray-50">
+                                            @if($student->avatar)
+                                                <img src="{{ asset('storage/' . $student->avatar) }}" 
+                                                     alt="{{ $student->name }}" 
+                                                     class="w-full h-full object-cover">
+                                            @else
+                                                <span class="text-slate-400 font-black text-xs uppercase">
+                                                    {{ strtoupper(substr($student->name, 0, 2)) }}
+                                                </span>
+                                            @endif
                                         </div>
                                         <div>
                                             <span class="text-gray-800 font-black block leading-none mb-1 text-sm uppercase">{{ $student->name }}</span>
@@ -78,8 +87,8 @@
                                 <td class="px-8 py-5 text-center">
                                     @if($sub)
                                         <div class="inline-flex flex-col text-[11px] font-black leading-tight text-center">
-                                            <span class="text-gray-700 uppercase">{{ $sub->last_upload_at->format('d M Y') }}</span>
-                                            <span class="text-indigo-400 uppercase tracking-widest">{{ $sub->last_upload_at->format('H:i') }} WIB</span>
+                                            <span class="text-gray-700 uppercase">{{ $sub->last_upload_at->timezone('Asia/Jakarta')->format('d M Y') }}</span>
+                                            <span class="text-indigo-400 uppercase tracking-widest">{{ $sub->last_upload_at->timezone('Asia/Jakarta')->format('H:i') }} WIB</span>
                                         </div>
                                     @else
                                         <span class="text-[10px] text-gray-300 font-black uppercase tracking-widest italic">Belum Mengumpul</span>
@@ -112,7 +121,7 @@
                                             </span>
                                             @if($sAslab === 'ACC' && $sub->aslab_acc_at)
                                                 <span class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">
-                                                    {{ $sub->aslab_acc_at->format('d/m/y H:i') }}
+                                                    {{ $sub->aslab_acc_at->timezone('Asia/Jakarta')->format('d/m/y H:i') }}
                                                 </span>
                                             @endif
                                         </div>
@@ -136,7 +145,7 @@
                                             </span>
                                             @if($sLab === 'ACC' && $sub->laboran_acc_at)
                                                 <span class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">
-                                                    {{ $sub->laboran_acc_at->format('d/m/y H:i') }}
+                                                    {{ $sub->laboran_acc_at->timezone('Asia/Jakarta')->format('d/m/y H:i') }}
                                                 </span>
                                             @endif
                                         </div>
