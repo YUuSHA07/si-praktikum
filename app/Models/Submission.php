@@ -29,7 +29,10 @@ class Submission extends Model
 
     protected $casts = [
         'first_upload_at' => 'datetime',
-        'last_upload_at' => 'datetime',
+        'last_upload_at'  => 'datetime',
+        'aslab_acc_at'    => 'datetime',
+        'laboran_acc_at'  => 'datetime',
+        'dosen_acc_at'    => 'datetime',
         'is_completed' => 'boolean',
         'is_final' => 'boolean',
     ];

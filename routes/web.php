@@ -88,6 +88,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Route untuk update data lama (termasuk kirim revisi)
     Route::put('/mahasiswa/submissions/{submission}', [SubmissionController::class, 'update'])
         ->name('submissions.update');
+
+    // Halaman daftar semua submission per meeting
+    Route::get('/submissions/meeting/{meeting}', [SubmissionController::class, 'index'])->name('submissions.index');
+
+    // Halaman baru untuk proses review (Handler)
+    Route::get('/submissions/{submission}/handler', [SubmissionController::class, 'handler'])->name('submissions.handler');
+
+    // Proses Simpan Approval (Revisi/ACC)
+    Route::post('/submissions/{submission}/approve', [SubmissionController::class, 'approve'])->name('submissions.approve');
 });
 
 require __DIR__.'/auth.php';
