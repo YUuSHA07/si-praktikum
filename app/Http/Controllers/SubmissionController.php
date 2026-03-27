@@ -7,7 +7,6 @@ use App\Models\Submission;
 use App\Models\SubmissionHistory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class SubmissionController extends Controller
 {
@@ -16,10 +15,8 @@ class SubmissionController extends Controller
      */
     public function index($meeting_id)
     {
-        // Load meeting beserta mahasiswa yang terdaftar di course tersebut
         $meeting = Meeting::with(['course.students'])->findOrFail($meeting_id);
         
-        // Ambil semua submission untuk meeting ini dan index berdasarkan student_id
         $submissions = Submission::where('meeting_id', $meeting_id)
                         ->with('histories')
                         ->get()
@@ -30,11 +27,9 @@ class SubmissionController extends Controller
 
     /**
      * TAMPILAN ASLAB/LABORAN: Halaman Review Spesifik (Handler)
-     * Menggantikan fungsi modal agar review lebih fokus
      */
     public function handler(Submission $submission)
     {
-        // Eager load data mahasiswa dan riwayat revisi (terbaru di atas)
         $submission->load(['student', 'histories' => function($q) {
             $q->latest();
         }]);
@@ -72,7 +67,7 @@ class SubmissionController extends Controller
                                 ->where('student_id', Auth::id())
                                 ->first();
 
-        // Jika sudah ada, arahkan ke update (revisi)
+        // Jika sudah ada record, alihkan ke fungsi update
         if ($submission) {
             return $this->update($request, $submission->id);
         }
@@ -86,8 +81,8 @@ class SubmissionController extends Controller
             'notes'           => $request->notes,
             'first_upload_at' => $now,
             'last_upload_at'  => $now,
-            'aslab_status'    => 'Pending', 
-            'laboran_status'  => 'Pending',
+            'aslab_status'    => 'PENDING', 
+            'laboran_status'  => 'PENDING',
             'is_completed'    => false
         ]);
 
@@ -104,12 +99,22 @@ class SubmissionController extends Controller
                                 ->where('student_id', Auth::id())
                                 ->firstOrFail();
 
+        // LOGIKA: Cek status Aslab saat ini
+        $currentAslabStatus = strtoupper($submission->aslab_status);
+        $newAslabStatus = 'PENDING';
+        $newLaboranStatus = 'PENDING';
+
+        // Jika Aslab sudah pernah memberikan ACC, jangan turunkan ke PENDING lagi.
+        // Ini agar tugas langsung bisa diperiksa Laboran tanpa lewat Aslab lagi.
+        if ($currentAslabStatus === 'ACC') {
+            $newAslabStatus = 'ACC';
+        }
+
         $submission->update([
             'submission_link' => $request->submission_link,
             'notes'           => $request->notes,
-            // Reset status agar Aslab tahu ada revisi masuk
-            'aslab_status'    => 'Pending', 
-            'laboran_status'  => 'Pending',
+            'aslab_status'    => $newAslabStatus, 
+            'laboran_status'  => $newLaboranStatus,
             'last_upload_at'  => now(),
         ]);
 
@@ -122,54 +127,58 @@ class SubmissionController extends Controller
      */
     public function approve(Request $request, $id)
     {
+        // Standarisasi status ke uppercase untuk pengecekan validasi
+        $statusInput = strtoupper($request->status);
+
         $request->validate([
-            'status' => 'required|in:ACC,Revisi',
-            'notes'  => 'required_if:status,Revisi' 
+            'status'   => 'required|in:ACC,REVISI',
+            'feedback' => 'required_if:status,REVISI' 
         ]);
 
-        try {
-            DB::transaction(function () use ($request, $id) {
-                $submission = Submission::findOrFail($id);
-                $user = Auth::user(); 
-                $now = now();
+        $submission = Submission::findOrFail($id);
+        $user = Auth::user();
+        $role = strtoupper($user->role);
+        $now = now();
 
-                if ($user->role === 'ASLAB') {
-                    if ($request->status === 'Revisi') {
-                        $this->createHistory($submission, $request->notes);
-                        $submission->aslab_status = 'Revisi';
-                        $submission->aslab_acc_at = null;
-                    } else {
-                        $submission->aslab_status = 'ACC';
-                        $submission->aslab_acc_at = $now;
-                    }
-                } 
-                elseif ($user->role === 'LABORAN') {
-                    if ($request->status === 'Revisi') {
-                        $this->createHistory($submission, $request->notes);
-                        $submission->laboran_status = 'Revisi';
-                        $submission->laboran_acc_at = null;
-                        
-                        // Jika laboran minta revisi, alur balik ke Aslab (Pending)
-                        $submission->aslab_status = 'Pending'; 
-                        $submission->aslab_acc_at = null; 
-                    } else {
-                        $submission->laboran_status = 'ACC';
-                        $submission->laboran_acc_at = $now;
-                        $submission->is_completed = true;
-                    }
-                }
+        if ($role === 'ASLAB') {
+            if ($statusInput === 'ACC') {
+                $submission->aslab_status = 'ACC';
+                $submission->aslab_acc_at = $now;
+            } else {
+                // Jika Aslab REVISI, simpan ke history dan reset semua level di bawahnya
+                $this->createHistory($submission, $request->feedback);
+                $submission->aslab_status = 'REVISI';
+                $submission->aslab_acc_at = null;
+                $submission->laboran_status = 'PENDING';
+                $submission->laboran_acc_at = null;
+            }
+        } 
+        
+        elseif ($role === 'LABORAN') {
+            // Proteksi: Laboran hanya bisa akses jika Aslab sudah ACC
+            if (strtoupper($submission->aslab_status) !== 'ACC') {
+                return back()->with('error', 'Menunggu verifikasi Asisten Laboratorium.');
+            }
 
-                $submission->save();
-            });
-
-            // Setelah review selesai, arahkan kembali ke daftar mahasiswa (Index)
-            $submission = Submission::find($id);
-            return redirect()->route('submissions.index', $submission->meeting_id)
-                            ->with('success', 'Status mahasiswa ' . $submission->student->name . ' berhasil diperbarui.');
-
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            if ($statusInput === 'ACC') {
+                $submission->laboran_status = 'ACC';
+                $submission->laboran_acc_at = $now;
+            } else {
+                // LOGIKA KRUSIAL: Jika Laboran REVISI, aslab_status tetap 'ACC'
+                $this->createHistory($submission, $request->feedback);
+                $submission->laboran_status = 'REVISI';
+                $submission->laboran_acc_at = null;
+                
+                // Note: aslab_status tidak diubah agar tetap ACC (Hijau)
+            }
         }
+
+        // Hitung apakah tugas sudah benar-benar selesai (Double ACC)
+        $submission->is_completed = (strtoupper($submission->aslab_status) === 'ACC' && strtoupper($submission->laboran_status) === 'ACC');
+        $submission->save();
+
+        return redirect()->route('submissions.index', $submission->meeting_id)
+                        ->with('success', 'Status '. $statusInput .' berhasil disimpan.');
     }
 
     /**
@@ -186,10 +195,9 @@ class SubmissionController extends Controller
     }
 
     /**
-     * HELPER: Simpan Riwayat Revisi (Private)
+     * HELPER: Simpan Riwayat Revisi ke tabel SubmissionHistory
      */
-    private function createHistory($submission, $notes) 
-    {
+    private function createHistory($submission, $notes) {
         return SubmissionHistory::create([
             'submission_id' => $submission->id,
             'drive_link'    => $submission->submission_link,

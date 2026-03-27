@@ -95,35 +95,51 @@
                                     @endif
                                 </td>
                                 
+                                {{-- Status Aslab --}}
                                 <td class="px-8 py-5 text-center">
                                     @if($sub)
                                         @php
                                             $sAslab = $sub->aslab_status;
                                             $colorAslab = match($sAslab) {
                                                 'ACC'    => 'bg-emerald-50 text-emerald-600 border-emerald-100',
-                                                'Revisi' => 'bg-red-50 text-red-600 border-red-100',
+                                                'REVISI' => 'bg-red-50 text-red-600 border-red-100',
                                                 default  => 'bg-amber-50 text-amber-600 border-amber-100',
                                             };
                                         @endphp
-                                        <span class="px-4 py-2 {{ $colorAslab }} rounded-xl text-[9px] font-black uppercase border shadow-sm">
-                                            {{ $sAslab ?? 'Waiting' }}
-                                        </span>
+                                        <div class="flex flex-col items-center gap-2">
+                                            <span class="px-4 py-2 {{ $colorAslab }} rounded-xl text-[9px] font-black uppercase border shadow-sm">
+                                                {{ $sAslab ?? 'Waiting' }}
+                                            </span>
+                                            @if($sAslab === 'ACC' && $sub->aslab_acc_at)
+                                                <span class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">
+                                                    {{ $sub->aslab_acc_at->format('d/m/y H:i') }}
+                                                </span>
+                                            @endif
+                                        </div>
                                     @endif
                                 </td>
 
+                                {{-- Status Laboran --}}
                                 <td class="px-8 py-5 text-center">
                                     @if($sub)
                                         @php
-                                            $sLab = $sub->laboran_status ?? 'Pending';
+                                            $sLab = $sub->laboran_status ?? 'PENDING';
                                             $colorLab = match($sLab) {
                                                 'ACC'    => 'bg-blue-50 text-blue-600 border-blue-100',
-                                                'Revisi' => 'bg-orange-50 text-orange-600 border-orange-100',
+                                                'REVISI' => 'bg-orange-50 text-orange-600 border-orange-100',
                                                 default  => 'bg-slate-50 text-slate-400 border-slate-100',
                                             };
                                         @endphp
-                                        <span class="px-4 py-2 {{ $colorLab }} rounded-xl text-[9px] font-black uppercase border shadow-sm">
-                                            {{ $sLab }}
-                                        </span>
+                                        <div class="flex flex-col items-center gap-2">
+                                            <span class="px-4 py-2 {{ $colorLab }} rounded-xl text-[9px] font-black uppercase border shadow-sm">
+                                                {{ $sLab }}
+                                            </span>
+                                            @if($sLab === 'ACC' && $sub->laboran_acc_at)
+                                                <span class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">
+                                                    {{ $sub->laboran_acc_at->format('d/m/y H:i') }}
+                                                </span>
+                                            @endif
+                                        </div>
                                     @endif
                                 </td>
 
