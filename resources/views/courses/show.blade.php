@@ -22,21 +22,56 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {{-- SIDEBAR: Informasi Praktikum --}}
         <div class="space-y-6">
-            <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100">
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
                 <h3 class="font-black text-gray-800 text-[10px] uppercase tracking-[0.2em] mb-8 border-b pb-4">Informasi Kelas</h3>
                 
-                <div class="space-y-6">
-                    <div class="flex flex-col">
-                        <span class="text-[9px] text-gray-400 uppercase font-black tracking-widest mb-1.5">Dosen Pengampu</span>
-                        <span class="font-bold text-gray-900 text-sm">{{ $course->dosen->name }}</span>
+                <div class="space-y-8">
+                    {{-- DOSEN --}}
+                    <div class="flex items-center gap-5">
+                        <div class="w-14 h-14 rounded-2xl bg-slate-100 flex-shrink-0 flex items-center justify-center overflow-hidden shadow-inner border border-gray-100">
+                            @if($course->dosen->avatar)
+                                <img src="{{ asset('storage/' . $course->dosen->avatar) }}" alt="{{ $course->dosen->name }}" class="w-full h-full object-cover">
+                            @else
+                                <span class="text-slate-400 font-black text-xs uppercase">{{ strtoupper(substr($course->dosen->name, 0, 2)) }}</span>
+                            @endif
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-[9px] text-gray-400 uppercase font-black tracking-widest mb-1">Dosen Pengampu</span>
+                            <span class="font-black text-gray-900 text-sm leading-tight uppercase">{{ $course->dosen->name }}</span>
+                            <span class="text-[10px] text-indigo-500 font-mono font-bold tracking-tighter italic mt-0.5">NIP/ID: {{ $course->dosen->id }}</span>
+                        </div>
                     </div>
-                    <div class="flex flex-col">
-                        <span class="text-[9px] text-gray-400 uppercase font-black tracking-widest mb-1.5">Laboran</span>
-                        <span class="font-bold text-gray-900 text-sm">{{ $course->laboran->name ?? '-' }}</span>
+
+                    {{-- LABORAN --}}
+                    <div class="flex items-center gap-5">
+                        <div class="w-14 h-14 rounded-2xl bg-slate-100 flex-shrink-0 flex items-center justify-center overflow-hidden shadow-inner border border-gray-100">
+                            @if($course->laboran && $course->laboran->avatar)
+                                <img src="{{ asset('storage/' . $course->laboran->avatar) }}" alt="{{ $course->laboran->name }}" class="w-full h-full object-cover">
+                            @else
+                                <span class="text-slate-400 font-black text-xs uppercase">
+                                    {{ $course->laboran ? strtoupper(substr($course->laboran->name, 0, 2)) : 'LB' }}
+                                </span>
+                            @endif
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-[9px] text-gray-400 uppercase font-black tracking-widest mb-1">Laboran</span>
+                            <span class="font-black text-gray-900 text-sm leading-tight uppercase">{{ $course->laboran->name ?? '-' }}</span>
+                        </div>
                     </div>
-                    <div class="flex flex-col pb-4">
-                        <span class="text-[9px] text-gray-400 uppercase font-black tracking-widest mb-1.5">Asisten Laboratorium</span>
-                        <span class="font-bold text-indigo-600 text-sm">{{ $course->aslab->name }}</span>
+
+                    {{-- ASLAB --}}
+                    <div class="flex items-center gap-5 pb-2">
+                        <div class="w-14 h-14 rounded-2xl bg-indigo-50 flex-shrink-0 flex items-center justify-center overflow-hidden shadow-inner border border-indigo-100">
+                            @if($course->aslab->avatar)
+                                <img src="{{ asset('storage/' . $course->aslab->avatar) }}" alt="{{ $course->aslab->name }}" class="w-full h-full object-cover">
+                            @else
+                                <span class="text-indigo-400 font-black text-xs uppercase">{{ strtoupper(substr($course->aslab->name, 0, 2)) }}</span>
+                            @endif
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-[9px] text-gray-400 uppercase font-black tracking-widest mb-1">Asisten Laboratorium</span>
+                            <span class="font-black text-indigo-600 text-sm leading-tight uppercase">{{ $course->aslab->name }}</span>
+                        </div>
                     </div>
                 </div>
 
@@ -89,7 +124,6 @@
                                     
                                     @if(auth()->user()->role === 'Mahasiswa' && $sub)
                                     <div class="mt-5 space-y-3">
-                                        {{-- Baris Status Aslab --}}
                                         <div class="flex items-center gap-3">
                                             <span class="text-[9px] font-black text-gray-400 uppercase tracking-tighter w-20">Asisten:</span>
                                             <span class="px-2 py-0.5 rounded-md text-[9px] font-black {{ $sub->aslab_status == 'ACC' ? 'bg-emerald-50 text-emerald-600' : ($sub->aslab_status == 'REVISI' ? 'bg-red-50 text-red-600 animate-pulse' : 'bg-amber-50 text-amber-600') }}">
@@ -97,12 +131,11 @@
                                             </span>
                                             @if($sub->aslab_acc_at && $sub->aslab_status == 'ACC')
                                                 <span class="text-[8px] font-bold text-gray-400 uppercase italic">
-                                                    ACC pd: {{ \Carbon\Carbon::parse($sub->aslab_acc_at)->translatedFormat('d M Y, H:i') }}
+                                                    ACC pd: {{ \Carbon\Carbon::parse($sub->aslab_acc_at)->timezone('Asia/Jakarta')->translatedFormat('d M Y, H:i') }} WIB
                                                 </span>
                                             @endif
                                         </div>
 
-                                        {{-- Baris Status Laboran --}}
                                         <div class="flex items-center gap-3">
                                             <span class="text-[9px] font-black text-gray-400 uppercase tracking-tighter w-20">Laboran:</span>
                                             <span class="px-2 py-0.5 rounded-md text-[9px] font-black {{ $sub->laboran_status == 'ACC' ? 'bg-emerald-50 text-emerald-600' : ($sub->laboran_status == 'REVISI' ? 'bg-red-50 text-red-600 animate-pulse' : 'bg-amber-50 text-amber-600') }}">
@@ -110,12 +143,11 @@
                                             </span>
                                             @if($sub->laboran_acc_at && $sub->laboran_status == 'ACC')
                                                 <span class="text-[8px] font-bold text-gray-400 uppercase italic">
-                                                    ACC pd: {{ \Carbon\Carbon::parse($sub->laboran_acc_at)->translatedFormat('d M Y, H:i') }}
+                                                    ACC pd: {{ \Carbon\Carbon::parse($sub->laboran_acc_at)->timezone('Asia/Jakarta')->translatedFormat('d M Y, H:i') }} WIB
                                                 </span>
                                             @endif
                                         </div>
 
-                                        {{-- Badge Final --}}
                                         @if($sub->is_completed)
                                             <div class="pt-2">
                                                 <span class="bg-indigo-600 text-white px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 flex items-center w-fit gap-1">
@@ -128,9 +160,7 @@
                                     @endif
                                 </div>
 
-                                {{-- Action Buttons --}}
                                 <div class="flex flex-wrap items-center gap-3">
-                                    {{-- Panel Aslab/Laboran --}}
                                     @if(in_array(auth()->user()->role, ['Aslab', 'Laboran']))
                                         <a href="{{ route('attendance.index', $meeting->id) }}" class="px-5 py-3 bg-amber-50 text-amber-700 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-amber-100 hover:bg-amber-100 transition shadow-sm">
                                             Presensi
@@ -140,7 +170,6 @@
                                         </a>
                                     @endif
 
-                                    {{-- Panel Mahasiswa --}}
                                     @if(auth()->user()->role === 'Mahasiswa')
                                         <a href="{{ route('mahasiswa.submissions.manage', $meeting->id) }}" 
                                            class="px-5 py-3 {{ $sub ? ($sub->aslab_status == 'REVISI' ? 'bg-red-600 hover:bg-red-700 shadow-red-100' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-100') : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100' }} text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl transition active:scale-95">
@@ -148,7 +177,6 @@
                                         </a>
                                     @endif
                                     
-                                    {{-- Link Modul --}}
                                     @if($meeting->module_drive_link)
                                         <a href="{{ $meeting->module_drive_link }}" target="_blank" class="p-3 bg-gray-50 text-gray-400 rounded-2xl border border-gray-100 hover:text-indigo-600 hover:bg-white transition" title="Download Modul">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
@@ -170,7 +198,7 @@
         </div>
     </div>
 
-    {{-- MODAL TAMBAH PERTEMUAN (KHUSUS ASLAB/LABORAN) --}}
+    {{-- MODAL TAMBAH PERTEMUAN --}}
     @if(in_array(auth()->user()->role, ['Aslab', 'Laboran']))
     <div id="modalMeeting" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in duration-300">
