@@ -66,16 +66,11 @@
                             <tr class="hover:bg-gray-50/50 transition-all group">
                                 <td class="px-8 py-5">
                                     <div class="flex items-center gap-4">
-                                        {{-- AVATAR DENGAN FALLBACK --}}
                                         <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center overflow-hidden shadow-inner border border-gray-50">
                                             @if($student->avatar)
-                                                <img src="{{ asset('storage/' . $student->avatar) }}" 
-                                                     alt="{{ $student->name }}" 
-                                                     class="w-full h-full object-cover">
+                                                <img src="{{ asset('storage/' . $student->avatar) }}" alt="{{ $student->name }}" class="w-full h-full object-cover">
                                             @else
-                                                <span class="text-slate-400 font-black text-xs uppercase">
-                                                    {{ strtoupper(substr($student->name, 0, 2)) }}
-                                                </span>
+                                                <span class="text-slate-400 font-black text-xs uppercase">{{ strtoupper(substr($student->name, 0, 2)) }}</span>
                                             @endif
                                         </div>
                                         <div>
@@ -84,16 +79,20 @@
                                         </div>
                                     </div>
                                 </td>
+                                
+                                {{-- Waktu Kumpul --}}
                                 <td class="px-8 py-5 text-center">
                                     @if($sub)
                                         <div class="inline-flex flex-col text-[11px] font-black leading-tight text-center">
-                                            <span class="text-gray-700 uppercase">{{ $sub->last_upload_at->timezone('Asia/Jakarta')->format('d M Y') }}</span>
-                                            <span class="text-indigo-400 uppercase tracking-widest">{{ $sub->last_upload_at->timezone('Asia/Jakarta')->format('H:i') }} WIB</span>
+                                            <span class="text-gray-700 uppercase">{{ \Carbon\Carbon::parse($sub->last_upload_at)->timezone('Asia/Jakarta')->format('d M Y') }}</span>
+                                            <span class="text-indigo-400 uppercase tracking-widest">{{ \Carbon\Carbon::parse($sub->last_upload_at)->timezone('Asia/Jakarta')->format('H:i') }} WIB</span>
                                         </div>
                                     @else
                                         <span class="text-[10px] text-gray-300 font-black uppercase tracking-widest italic">Belum Mengumpul</span>
                                     @endif
                                 </td>
+
+                                {{-- Riwayat --}}
                                 <td class="px-8 py-5 text-center">
                                     @if($sub && $sub->histories->count() > 0)
                                         <span class="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-black shadow-sm border border-indigo-100">
@@ -108,7 +107,7 @@
                                 <td class="px-8 py-5 text-center">
                                     @if($sub)
                                         @php
-                                            $sAslab = $sub->aslab_status;
+                                            $sAslab = strtoupper($sub->aslab_status);
                                             $colorAslab = match($sAslab) {
                                                 'ACC'    => 'bg-emerald-50 text-emerald-600 border-emerald-100',
                                                 'REVISI' => 'bg-red-50 text-red-600 border-red-100',
@@ -116,14 +115,7 @@
                                             };
                                         @endphp
                                         <div class="flex flex-col items-center gap-2">
-                                            <span class="px-4 py-2 {{ $colorAslab }} rounded-xl text-[9px] font-black uppercase border shadow-sm">
-                                                {{ $sAslab ?? 'Waiting' }}
-                                            </span>
-                                            @if($sAslab === 'ACC' && $sub->aslab_acc_at)
-                                                <span class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">
-                                                    {{ $sub->aslab_acc_at->timezone('Asia/Jakarta')->format('d/m/y H:i') }}
-                                                </span>
-                                            @endif
+                                            <span class="px-4 py-2 {{ $colorAslab }} rounded-xl text-[9px] font-black uppercase border shadow-sm">{{ $sAslab }}</span>
                                         </div>
                                     @endif
                                 </td>
@@ -132,7 +124,7 @@
                                 <td class="px-8 py-5 text-center">
                                     @if($sub)
                                         @php
-                                            $sLab = $sub->laboran_status ?? 'PENDING';
+                                            $sLab = strtoupper($sub->laboran_status ?? 'PENDING');
                                             $colorLab = match($sLab) {
                                                 'ACC'    => 'bg-blue-50 text-blue-600 border-blue-100',
                                                 'REVISI' => 'bg-orange-50 text-orange-600 border-orange-100',
@@ -140,24 +132,29 @@
                                             };
                                         @endphp
                                         <div class="flex flex-col items-center gap-2">
-                                            <span class="px-4 py-2 {{ $colorLab }} rounded-xl text-[9px] font-black uppercase border shadow-sm">
-                                                {{ $sLab }}
-                                            </span>
-                                            @if($sLab === 'ACC' && $sub->laboran_acc_at)
-                                                <span class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">
-                                                    {{ $sub->laboran_acc_at->timezone('Asia/Jakarta')->format('d/m/y H:i') }}
-                                                </span>
-                                            @endif
+                                            <span class="px-4 py-2 {{ $colorLab }} rounded-xl text-[9px] font-black uppercase border shadow-sm">{{ $sLab }}</span>
                                         </div>
                                     @endif
                                 </td>
 
+                                {{-- AKSI --}}
                                 <td class="px-8 py-5 text-right">
                                     @if($sub)
-                                        <a href="{{ route('submissions.handler', $sub->id) }}" 
-                                           class="inline-block bg-indigo-600 text-white px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase hover:bg-indigo-700 shadow-xl shadow-indigo-100 active:scale-95 transition-all tracking-widest">
-                                            Review File
-                                        </a>
+                                        {{-- LOGIKA: Cek Role Dosen --}}
+                                        @if(strtoupper(auth()->user()->role) === 'DOSEN')
+                                            {{-- MENGGUNAKAN submission_link sesuai dengan Controller Anda --}}
+                                            <a href="{{ $sub->submission_link }}" 
+                                               target="_blank"
+                                               class="inline-block bg-emerald-600 text-white px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase hover:bg-emerald-700 shadow-xl shadow-emerald-100 active:scale-95 transition-all tracking-widest">
+                                                Lihat File
+                                            </a>
+                                        @else
+                                            {{-- Role lain (Aslab/Laboran) tetap ke halaman review --}}
+                                            <a href="{{ route('submissions.handler', $sub->id) }}" 
+                                               class="inline-block bg-indigo-600 text-white px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase hover:bg-indigo-700 shadow-xl shadow-indigo-100 active:scale-95 transition-all tracking-widest">
+                                                Review File
+                                            </a>
+                                        @endif
                                     @else
                                         <button disabled class="text-gray-300 text-[10px] font-black italic tracking-widest opacity-50">N/A</button>
                                     @endif
@@ -169,9 +166,4 @@
             </div>
         </div>
     </div>
-
-    <style>
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
-    </style>
 </x-app-layout>

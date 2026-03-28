@@ -75,6 +75,7 @@
                     </div>
                 </div>
 
+                {{-- Akses Rekap Presensi untuk Non-Mahasiswa (Dosen, Aslab, Laboran) --}}
                 @if(auth()->user()->role !== 'Mahasiswa')
                 <div class="mt-8 pt-8 border-t border-gray-50 space-y-3">
                     <a href="{{ route('attendance.report', $course->id) }}" class="w-full flex items-center justify-center gap-2 px-4 py-4 bg-indigo-50 text-indigo-700 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition border border-indigo-100 shadow-sm">
@@ -92,8 +93,8 @@
                 <div class="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
                     <h3 class="font-black text-gray-800 text-[10px] uppercase tracking-[0.2em]">Materi & Jadwal Pertemuan</h3>
                     
-                    {{-- Tombol Tambah Pertemuan (Aslab/Laboran) --}}
-                    @if(in_array(auth()->user()->role, ['Aslab', 'Laboran']))
+                    {{-- Tombol Tambah Pertemuan (Dosen, Aslab, Laboran) --}}
+                    @if(in_array(auth()->user()->role, ['Dosen', 'Aslab', 'Laboran']))
                         <button onclick="openMeetingModal()" class="bg-indigo-600 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition shadow-xl shadow-indigo-100 active:scale-95">
                             Tambah Pertemuan
                         </button>
@@ -122,6 +123,7 @@
                                     </div>
                                     <h4 class="font-black text-gray-800 text-xl leading-tight group-hover:text-indigo-600 transition">{{ $meeting->title }}</h4>
                                     
+                                    {{-- Info Status Tugas (Khusus Mahasiswa) --}}
                                     @if(auth()->user()->role === 'Mahasiswa' && $sub)
                                     <div class="mt-5 space-y-3">
                                         <div class="flex items-center gap-3">
@@ -129,39 +131,20 @@
                                             <span class="px-2 py-0.5 rounded-md text-[9px] font-black {{ $sub->aslab_status == 'ACC' ? 'bg-emerald-50 text-emerald-600' : ($sub->aslab_status == 'REVISI' ? 'bg-red-50 text-red-600 animate-pulse' : 'bg-amber-50 text-amber-600') }}">
                                                 {{ $sub->aslab_status }}
                                             </span>
-                                            @if($sub->aslab_acc_at && $sub->aslab_status == 'ACC')
-                                                <span class="text-[8px] font-bold text-gray-400 uppercase italic">
-                                                    ACC pd: {{ \Carbon\Carbon::parse($sub->aslab_acc_at)->timezone('Asia/Jakarta')->translatedFormat('d M Y, H:i') }} WIB
-                                                </span>
-                                            @endif
                                         </div>
-
                                         <div class="flex items-center gap-3">
                                             <span class="text-[9px] font-black text-gray-400 uppercase tracking-tighter w-20">Laboran:</span>
                                             <span class="px-2 py-0.5 rounded-md text-[9px] font-black {{ $sub->laboran_status == 'ACC' ? 'bg-emerald-50 text-emerald-600' : ($sub->laboran_status == 'REVISI' ? 'bg-red-50 text-red-600 animate-pulse' : 'bg-amber-50 text-amber-600') }}">
                                                 {{ $sub->laboran_status }}
                                             </span>
-                                            @if($sub->laboran_acc_at && $sub->laboran_status == 'ACC')
-                                                <span class="text-[8px] font-bold text-gray-400 uppercase italic">
-                                                    ACC pd: {{ \Carbon\Carbon::parse($sub->laboran_acc_at)->timezone('Asia/Jakarta')->translatedFormat('d M Y, H:i') }} WIB
-                                                </span>
-                                            @endif
                                         </div>
-
-                                        @if($sub->is_completed)
-                                            <div class="pt-2">
-                                                <span class="bg-indigo-600 text-white px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 flex items-center w-fit gap-1">
-                                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-                                                    Verified Final
-                                                </span>
-                                            </div>
-                                        @endif
                                     </div>
                                     @endif
                                 </div>
 
                                 <div class="flex flex-wrap items-center gap-3">
-                                    @if(in_array(auth()->user()->role, ['Aslab', 'Laboran']))
+                                    {{-- Tombol Aksi untuk Dosen, Aslab, dan Laboran --}}
+                                    @if(in_array(auth()->user()->role, ['Dosen', 'Aslab', 'Laboran']))
                                         <a href="{{ route('attendance.index', $meeting->id) }}" class="px-5 py-3 bg-amber-50 text-amber-700 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-amber-100 hover:bg-amber-100 transition shadow-sm">
                                             Presensi
                                         </a>
@@ -198,8 +181,8 @@
         </div>
     </div>
 
-    {{-- MODAL TAMBAH PERTEMUAN --}}
-    @if(in_array(auth()->user()->role, ['Aslab', 'Laboran']))
+    {{-- MODAL TAMBAH PERTEMUAN (Akses untuk Dosen, Aslab, Laboran) --}}
+    @if(in_array(auth()->user()->role, ['Dosen', 'Aslab', 'Laboran']))
     <div id="modalMeeting" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in duration-300">
             <form action="{{ route('meetings.store', $course->id) }}" method="POST">

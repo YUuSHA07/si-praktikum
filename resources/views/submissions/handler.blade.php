@@ -82,15 +82,25 @@
                         </div>
                     </div>
 
-                    <div class="flex justify-center mt-6">
-                        <button type="button" onclick="handleLivePreview()" 
-                            class="inline-flex items-center justify-center gap-3 px-8 py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 transition shadow-xl shadow-slate-200 active:scale-95 group">
-                            <svg class="w-4 h-4 transform group-hover:scale-110 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                            </svg>
-                            Refresh Preview
-                        </button>
-                    </div>
+                <div class="flex flex-col sm:flex-row justify-center items-stretch gap-3 mt-6 w-full">
+                    {{-- Button Refresh --}}
+                    <button type="button" onclick="handleLivePreview()" 
+                        class="flex-1 inline-flex items-center justify-center gap-3 px-6 py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition shadow-xl shadow-slate-200 active:scale-95 group min-h-[56px]">
+                        <svg class="w-4 h-4 transform group-hover:rotate-180 transition duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        <span>Refresh</span>
+                    </button>
+
+                    {{-- Button Periksa Laprak (External Link) --}}
+                    <a href="{{ $submission->submission_link }}" target="_blank"
+                        class="flex-1 inline-flex items-center justify-center gap-3 px-6 py-4 bg-emerald-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition shadow-xl shadow-emerald-100 active:scale-95 group min-h-[56px]">
+                        <svg class="w-4 h-4 transform group-hover:translate-x-1 group-hover:-translate-y-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                        </svg>
+                        <span>Periksa Laprak</span>
+                    </a>
+                </div>
                 </div>
 
                 {{-- Form Penilaian --}}
