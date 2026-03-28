@@ -11,13 +11,63 @@
         </div>
     @endif
 
-    {{-- Tombol Kembali --}}
-    <div class="mb-6">
+    {{-- Header & Navigasi --}}
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <a href="{{ route('courses.index') }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-black flex items-center transition group">
             <svg class="w-4 h-4 mr-1 transform group-hover:-translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
             KEMBALI KE DASHBOARD
         </a>
+
+        @if(in_array(strtoupper(Auth::user()->role), ['ASLAB', 'LABORAN', 'DOSEN']))
+        <div class="flex gap-3">
+            @if(!$course->finalTask)
+            <button onclick="document.getElementById('modal-final-task').classList.replace('hidden', 'flex')" class="px-4 py-2 bg-indigo-600 text-white text-[10px] font-black rounded-xl uppercase tracking-widest hover:bg-indigo-700 transition shadow-lg shadow-indigo-100">
+                + Buat Laprak Final
+            </button>
+            @endif
+            <button onclick="openMeetingModal()" class="px-4 py-2 bg-slate-900 text-white text-[10px] font-black rounded-xl uppercase tracking-widest hover:bg-slate-800 transition">
+                + Tambah Pertemuan
+            </button>
+        </div>
+        @endif
     </div>
+
+    {{-- SECTION: HERO BANNER LAPRAK FINAL (Highlight Utama) --}}
+    @if($course->finalTask)
+    <div class="bg-gradient-to-r from-indigo-600 to-indigo-800 rounded-[2rem] shadow-xl shadow-indigo-100 p-8 mb-8 relative overflow-hidden text-white">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+        
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
+            <div class="flex-1">
+                <div class="flex items-center gap-3 mb-3">
+                    <span class="px-3 py-1 bg-white/20 backdrop-blur-md text-white text-[9px] font-black rounded-lg uppercase tracking-widest border border-white/30">TUGAS PUNCAK</span>
+                    <h3 class="text-2xl font-black uppercase tracking-tight">Laporan Praktikum Final</h3>
+                </div>
+                <p class="text-indigo-100 text-sm font-medium max-w-2xl leading-relaxed">{{ $course->finalTask->description }}</p>
+                
+                @if($course->finalTask->deadline)
+                    <div class="mt-4 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest {{ now()->gt($course->finalTask->deadline) ? 'text-red-300 font-extrabold' : 'text-indigo-200' }}">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Batas Waktu: {{ \Carbon\Carbon::parse($course->finalTask->deadline)->format('d M Y, H:i') }} 
+                        {{ now()->gt($course->finalTask->deadline) ? '(PENGUMPULAN DITUTUP)' : '' }}
+                    </div>
+                @endif
+            </div>
+
+            <div class="w-full md:w-auto">
+                @if(strtoupper(Auth::user()->role) === 'MAHASISWA')
+                    <a href="{{ route('mahasiswa.final-tasks.manage', $course->finalTask->id) }}" class="block w-full md:w-auto px-8 py-4 bg-white text-indigo-600 text-[11px] font-black rounded-2xl uppercase tracking-widest hover:bg-indigo-50 transition shadow-lg text-center active:scale-95">
+                        Kelola Laprak Final
+                    </a>
+                @else
+                    <a href="{{ route('final-tasks.index', $course->finalTask->id) }}" class="block w-full md:w-auto px-8 py-4 bg-slate-900 text-white text-[11px] font-black rounded-2xl uppercase tracking-widest hover:bg-slate-800 transition shadow-lg text-center border border-white/10 active:scale-95">
+                        Review Pengumpulan
+                    </a>
+                @endif
+            </div>
+        </div>
+    </div>
+    @endif
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {{-- SIDEBAR: Informasi Praktikum --}}
@@ -38,7 +88,7 @@
                         <div class="flex flex-col">
                             <span class="text-[9px] text-gray-400 uppercase font-black tracking-widest mb-1">Dosen Pengampu</span>
                             <span class="font-black text-gray-900 text-sm leading-tight uppercase">{{ $course->dosen->name }}</span>
-                            <span class="text-[10px] text-indigo-500 font-mono font-bold tracking-tighter italic mt-0.5">NIP/ID: {{ $course->dosen->id }}</span>
+                            <span class="text-[10px] text-indigo-500 font-mono font-bold tracking-tighter italic mt-0.5">NIP: {{ $course->dosen->id }}</span>
                         </div>
                     </div>
 
@@ -75,7 +125,6 @@
                     </div>
                 </div>
 
-                {{-- Akses Rekap Presensi untuk Non-Mahasiswa (Dosen, Aslab, Laboran) --}}
                 @if(auth()->user()->role !== 'Mahasiswa')
                 <div class="mt-8 pt-8 border-t border-gray-50 space-y-3">
                     <a href="{{ route('attendance.report', $course->id) }}" class="w-full flex items-center justify-center gap-2 px-4 py-4 bg-indigo-50 text-indigo-700 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition border border-indigo-100 shadow-sm">
@@ -91,17 +140,38 @@
         <div class="lg:col-span-2">
             <div class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
                 <div class="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
-                    <h3 class="font-black text-gray-800 text-[10px] uppercase tracking-[0.2em]">Materi & Jadwal Pertemuan</h3>
-                    
-                    {{-- Tombol Tambah Pertemuan (Dosen, Aslab, Laboran) --}}
-                    @if(in_array(auth()->user()->role, ['Dosen', 'Aslab', 'Laboran']))
-                        <button onclick="openMeetingModal()" class="bg-indigo-600 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition shadow-xl shadow-indigo-100 active:scale-95">
-                            Tambah Pertemuan
-                        </button>
-                    @endif
+                    <h3 class="font-black text-gray-800 text-[10px] uppercase tracking-[0.2em]">Daftar Tugas & Pertemuan</h3>
                 </div>
 
                 <div class="divide-y divide-gray-50">
+                    {{-- 1. BARIS LAPRAK FINAL DI DALAM DAFTAR (Jika Ada) --}}
+                    @if($course->finalTask)
+                    <div class="p-8 bg-indigo-50/30 hover:bg-indigo-50 transition group border-l-4 border-indigo-600">
+                        <div class="flex flex-col md:flex-row justify-between gap-6">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <span class="px-3 py-1 bg-indigo-600 text-white text-[9px] font-black rounded-lg uppercase tracking-[0.1em]">TUGAS AKHIR</span>
+                                    <span class="text-[9px] font-black uppercase tracking-widest text-indigo-500 italic">Laporan Praktikum Final</span>
+                                </div>
+                                <h4 class="font-black text-gray-800 text-xl leading-tight group-hover:text-indigo-600 transition">Final Project & Laporan Semester</h4>
+                            </div>
+
+                            <div class="flex items-center gap-3">
+                                @if(strtoupper(Auth::user()->role) === 'MAHASISWA')
+                                    <a href="{{ route('mahasiswa.final-tasks.manage', $course->finalTask->id) }}" class="px-5 py-3 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition active:scale-95 text-center min-w-[120px]">
+                                        Kelola Final
+                                    </a>
+                                @else
+                                    <a href="{{ route('final-tasks.index', $course->finalTask->id) }}" class="px-5 py-3 bg-slate-800 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 transition shadow-lg text-center min-w-[120px]">
+                                        Review Final
+                                    </a>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
+                    {{-- 2. DAFTAR PERTEMUAN RUTIN --}}
                     @forelse($course->meetings->sortBy('meeting_number') as $meeting)
                         @php 
                             $sub = $meeting->submissions->where('student_id', auth()->id())->first(); 
@@ -123,18 +193,17 @@
                                     </div>
                                     <h4 class="font-black text-gray-800 text-xl leading-tight group-hover:text-indigo-600 transition">{{ $meeting->title }}</h4>
                                     
-                                    {{-- Info Status Tugas (Khusus Mahasiswa) --}}
                                     @if(auth()->user()->role === 'Mahasiswa' && $sub)
                                     <div class="mt-5 space-y-3">
-                                        <div class="flex items-center gap-3">
-                                            <span class="text-[9px] font-black text-gray-400 uppercase tracking-tighter w-20">Asisten:</span>
-                                            <span class="px-2 py-0.5 rounded-md text-[9px] font-black {{ $sub->aslab_status == 'ACC' ? 'bg-emerald-50 text-emerald-600' : ($sub->aslab_status == 'REVISI' ? 'bg-red-50 text-red-600 animate-pulse' : 'bg-amber-50 text-amber-600') }}">
+                                        <div class="flex items-center gap-3 text-[9px] font-black uppercase tracking-tighter">
+                                            <span class="text-gray-400 w-20 text-[8px]">Status Aslab:</span>
+                                            <span class="px-2 py-0.5 rounded-md {{ $sub->aslab_status == 'ACC' ? 'bg-emerald-50 text-emerald-600' : ($sub->aslab_status == 'REVISI' ? 'bg-red-50 text-red-600 animate-pulse' : 'bg-amber-50 text-amber-600') }}">
                                                 {{ $sub->aslab_status }}
                                             </span>
                                         </div>
-                                        <div class="flex items-center gap-3">
-                                            <span class="text-[9px] font-black text-gray-400 uppercase tracking-tighter w-20">Laboran:</span>
-                                            <span class="px-2 py-0.5 rounded-md text-[9px] font-black {{ $sub->laboran_status == 'ACC' ? 'bg-emerald-50 text-emerald-600' : ($sub->laboran_status == 'REVISI' ? 'bg-red-50 text-red-600 animate-pulse' : 'bg-amber-50 text-amber-600') }}">
+                                        <div class="flex items-center gap-3 text-[9px] font-black uppercase tracking-tighter">
+                                            <span class="text-gray-400 w-20 text-[8px]">Status Laboran:</span>
+                                            <span class="px-2 py-0.5 rounded-md {{ $sub->laboran_status == 'ACC' ? 'bg-emerald-50 text-emerald-600' : ($sub->laboran_status == 'REVISI' ? 'bg-red-50 text-red-600 animate-pulse' : 'bg-amber-50 text-amber-600') }}">
                                                 {{ $sub->laboran_status }}
                                             </span>
                                         </div>
@@ -143,9 +212,8 @@
                                 </div>
 
                                 <div class="flex flex-wrap items-center gap-3">
-                                    {{-- Tombol Aksi untuk Dosen, Aslab, dan Laboran --}}
                                     @if(in_array(auth()->user()->role, ['Dosen', 'Aslab', 'Laboran']))
-                                        <a href="{{ route('attendance.index', $meeting->id) }}" class="px-5 py-3 bg-amber-50 text-amber-700 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-amber-100 hover:bg-amber-100 transition shadow-sm">
+                                        <a href="{{ route('attendance.index', $meeting->id) }}" class="px-5 py-3 bg-amber-50 text-amber-700 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-amber-100 hover:bg-amber-100 transition shadow-sm text-center min-w-[100px]">
                                             Presensi
                                         </a>
                                         <a href="{{ route('submissions.index', $meeting->id) }}" class="px-5 py-3 bg-slate-800 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 transition flex items-center shadow-lg shadow-slate-200">
@@ -155,7 +223,7 @@
 
                                     @if(auth()->user()->role === 'Mahasiswa')
                                         <a href="{{ route('mahasiswa.submissions.manage', $meeting->id) }}" 
-                                           class="px-5 py-3 {{ $sub ? ($sub->aslab_status == 'REVISI' ? 'bg-red-600 hover:bg-red-700 shadow-red-100' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-100') : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100' }} text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl transition active:scale-95">
+                                           class="px-5 py-3 {{ $sub ? ($sub->aslab_status == 'REVISI' ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700') : 'bg-indigo-600 hover:bg-indigo-700' }} text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl transition active:scale-95 text-center min-w-[120px]">
                                             {{ $sub ? 'Kelola Tugas' : 'Kumpul Tugas' }}
                                         </a>
                                     @endif
@@ -181,8 +249,10 @@
         </div>
     </div>
 
-    {{-- MODAL TAMBAH PERTEMUAN (Akses untuk Dosen, Aslab, Laboran) --}}
+    {{-- MODALS SECTION --}}
     @if(in_array(auth()->user()->role, ['Dosen', 'Aslab', 'Laboran']))
+    
+    {{-- Modal Tambah Pertemuan --}}
     <div id="modalMeeting" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in duration-300">
             <form action="{{ route('meetings.store', $course->id) }}" method="POST">
@@ -205,12 +275,40 @@
                     </div>
                 </div>
                 <div class="p-10 pt-0 bg-white flex flex-col gap-4">
-                    <button type="submit" class="w-full bg-indigo-600 text-white py-5 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition active:scale-95">Simpan Materi</button>
+                    <button type="submit" class="w-full bg-indigo-600 text-white py-5 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition">Simpan Materi</button>
                     <button type="button" onclick="closeMeetingModal()" class="w-full text-[9px] font-black text-gray-400 uppercase tracking-widest hover:text-red-500 transition">Batalkan</button>
                 </div>
             </form>
         </div>
     </div>
+
+    {{-- Modal Buat Laprak Final --}}
+    <div id="modal-final-task" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden">
+            <form action="{{ route('final-tasks.store', $course->id) }}" method="POST">
+                @csrf
+                <div class="p-10 border-b border-gray-50 bg-indigo-50/30">
+                    <h3 class="text-2xl font-black text-gray-800 uppercase tracking-tight">Setup Laprak Final</h3>
+                    <p class="text-[9px] font-bold text-indigo-400 uppercase tracking-widest mt-1">Laporan Akhir Praktikum Semester</p>
+                </div>
+                <div class="p-10 space-y-6">
+                    <div>
+                        <label class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2.5">Instruksi / Deskripsi Tugas</label>
+                        <textarea name="description" rows="4" class="w-full rounded-2xl border-gray-100 bg-gray-50 text-sm p-4 focus:ring-4 focus:ring-indigo-50 outline-none resize-none" placeholder="Tuliskan instruksi pengerjaan di sini..." required></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2.5">Batas Waktu (Deadline)</label>
+                        <input type="datetime-local" name="deadline" class="w-full rounded-2xl border-gray-100 bg-gray-50 text-sm p-4 focus:ring-4 focus:ring-indigo-50 outline-none">
+                    </div>
+                </div>
+                <div class="p-10 pt-0 bg-white flex flex-col sm:flex-row gap-4">
+                    <button type="submit" class="flex-1 bg-indigo-600 text-white py-5 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition">Simpan & Publikasi</button>
+                    <button type="button" onclick="document.getElementById('modal-final-task').classList.replace('flex', 'hidden')" class="flex-1 text-[9px] font-black text-gray-400 uppercase tracking-widest hover:text-red-500 transition">Batal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    @endif
 
     <script>
         function openMeetingModal() {
@@ -222,5 +320,4 @@
             document.body.style.overflow = 'auto';
         }
     </script>
-    @endif
 </x-app-layout>

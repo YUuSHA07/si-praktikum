@@ -10,6 +10,7 @@ use App\Http\Controllers\CourseController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\SubmissionController;
+use App\Http\Controllers\FinalTaskController;
 
 // 1. Rute Publik
 Route::get('/', function () {
@@ -97,6 +98,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Proses Simpan Approval (Revisi/ACC)
     Route::post('/submissions/{submission}/approve', [SubmissionController::class, 'approve'])->name('submissions.approve');
+
+    // Rute untuk Final Task (Laporan Praktikum Final)
+    Route::post('/courses/{course}/final-tasks', [FinalTaskController::class, 'store'])->name('final-tasks.store');
+    Route::get('/final-tasks/{final_task}', [FinalTaskController::class, 'index'])->name('final-tasks.index');
+    
+    // Rute untuk sisi Mahasiswa (sesuaikan dengan nama route yang ada di view)
+    Route::get('/mahasiswa/final-tasks/{final_task}', [FinalTaskController::class, 'manage'])->name('mahasiswa.final-tasks.manage');
+    // Route untuk memproses pengiriman tugas
+    Route::post('/mahasiswa/final-tasks/{final_task}/submit', [App\Http\Controllers\FinalTaskController::class, 'submit'])->name('final-tasks.submit');
+    // Rute untuk update deadline 
+
+    // Route untuk Update Deadline (Baris 11 di Blade)
+    Route::put('/final-tasks/{final_task}/deadline', [FinalTaskController::class, 'updateDeadline'])->name('final-tasks.update-deadline');
+
+    // Route untuk Tombol Periksa (Baris 90 di Blade)
+    Route::get('/final-tasks/submission/{submission}', [FinalTaskController::class, 'handler'])->name('final-tasks.handler');
+    // Route untuk Proses Approval (Baris 120 di Blade)
+    Route::patch('/final-tasks/submission/{submission}/approve', [App\Http\Controllers\FinalTaskController::class, 'approve'])->name('final-tasks.approve');
 });
 
 require __DIR__.'/auth.php';

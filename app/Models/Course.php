@@ -53,4 +53,10 @@ class Course extends Model
     {
         return $this->hasMany(Meeting::class)->orderBy('meeting_number', 'asc');
     }
+
+    public function finalTask()
+    {
+        // Pastikan nama foreign key di tabel final_tasks adalah course_id
+        return $this->hasOne(FinalTask::class, 'course_id');
+    }
 }

@@ -125,4 +125,19 @@ class CourseController extends Controller
 
         return redirect()->route('courses.index')->with('success', 'Berhasil bergabung ke kelas ' . $course->course_name);
     }
+
+    public function show($id)
+    {
+        // Eager loading sangat penting agar 'finalTask' tidak bernilai null di view
+        $course = Course::with([
+            'meetings.submissions', 
+            'meetings.attendances', 
+            'finalTask', // <--- Ini harus dipanggil
+            'dosen', 
+            'aslab', 
+            'laboran'
+        ])->findOrFail($id);
+
+        return view('courses.show', compact('course'));
+    }
 }
