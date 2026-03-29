@@ -116,6 +116,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/final-tasks/submission/{submission}', [FinalTaskController::class, 'handler'])->name('final-tasks.handler');
     // Route untuk Proses Approval (Baris 120 di Blade)
     Route::patch('/final-tasks/submission/{submission}/approve', [App\Http\Controllers\FinalTaskController::class, 'approve'])->name('final-tasks.approve');
+    
+    // Route untuk Update Link/Revisi (Baris 130 di Blade)
+    Route::put('/final-tasks/submissions/{id}', [FinalTaskController::class, 'update'])->name('final-tasks.update');
 });
 
 require __DIR__.'/auth.php';

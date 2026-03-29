@@ -28,65 +28,79 @@ class FinalTaskController extends Controller
     }
 
     /**
-     * PROSES MAHASISWA: Simpan atau Perbarui Laprak Final
+     * PROSES MAHASISWA: Simpan Tugas Baru
      */
     public function submit(Request $request, $final_task_id)
     {
+        $request->validate([
+            'submission_link' => 'required|url',
+        ]);
+
         $finalTask = FinalTask::findOrFail($final_task_id);
 
         if ($finalTask->deadline && now()->gt($finalTask->deadline)) {
             return back()->with('error', 'Waktu pengumpulan sudah ditutup.');
         }
 
+        $submission = Submission::where('final_task_id', $final_task_id)
+                                ->where('student_id', Auth::id())
+                                ->where('is_final', true)
+                                ->first();
+
+        // Jika sudah ada record, alihkan ke fungsi update
+        if ($submission) {
+            return $this->update($request, $submission->id);
+        }
+
+        $now = now();
+
+        Submission::create([
+            'final_task_id'   => $final_task_id,
+            'student_id'      => Auth::id(),
+            'submission_link' => $request->submission_link,
+            'notes'           => $request->notes,
+            'is_final'        => true,
+            'first_upload_at' => $now,
+            'last_upload_at'  => $now,
+            'aslab_status'    => 'PENDING',
+            'laboran_status'  => 'PENDING',
+            'dosen_status'    => 'PENDING',
+            'is_completed'    => false,
+        ]);
+
+        return redirect()->route('courses.show', $finalTask->course_id)
+                         ->with('success', 'Laprak Final berhasil dikumpulkan.');
+    }
+
+    /**
+     * PROSES MAHASISWA: Update atau Kirim Revisi
+     */
+    public function update(Request $request, $id)
+    {
         $request->validate([
             'submission_link' => 'required|url',
         ]);
 
-        /** @var \App\Models\User $user */
-        $user = Auth::user();
+        $submission = Submission::with('finalTask')->where('id', $id)
+                                ->where('student_id', Auth::id())
+                                ->firstOrFail();
 
-        $submission = Submission::where('final_task_id', $final_task_id)
-                                ->where('student_id', $user->id)
-                                ->where('is_final', true)
-                                ->first();
+        // LOGIKA: Jika sudah ACC, pertahankan. Jika REVISI/PENDING, ubah jadi PENDING.
+        $newAslabStatus = (strtoupper($submission->aslab_status) === 'ACC') ? 'ACC' : 'PENDING';
+        $newLaboranStatus = (strtoupper($submission->laboran_status) === 'ACC') ? 'ACC' : 'PENDING';
+        $newDosenStatus = (strtoupper($submission->dosen_status) === 'ACC') ? 'ACC' : 'PENDING';
 
-        try {
-            return DB::transaction(function () use ($request, $submission, $final_task_id, $user, $finalTask) {
-                if ($submission) {
-                    $submission->update([
-                        'submission_link' => $request->submission_link,
-                        'notes'           => $request->notes,
-                        'aslab_status'    => ($submission->aslab_status === 'ACC') ? 'ACC' : 'PENDING',
-                        'laboran_status'  => ($submission->laboran_status === 'ACC') ? 'ACC' : 'PENDING',
-                        'dosen_status'    => 'PENDING', 
-                        'last_upload_at'  => now(),
-                    ]);
-                    $msg = 'Tugas perbaikan berhasil diperbarui.';
-                } else {
-                    $submission = Submission::create([
-                        'final_task_id'   => $final_task_id,
-                        'student_id'      => $user->id,
-                        'submission_link' => $request->submission_link,
-                        'notes'           => $request->notes,
-                        'is_final'        => true,
-                        'aslab_status'    => 'PENDING',
-                        'laboran_status'  => 'PENDING',
-                        'dosen_status'    => 'PENDING',
-                        'is_completed'    => false,
-                        'first_upload_at' => now(),
-                        'last_upload_at'  => now(),
-                    ]);
-                    $msg = 'Laprak Final berhasil dikumpulkan.';
-                }
+        $submission->update([
+            'submission_link' => $request->submission_link,
+            'notes'           => $request->notes,
+            'aslab_status'    => $newAslabStatus,
+            'laboran_status'  => $newLaboranStatus,
+            'dosen_status'    => $newDosenStatus,
+            'last_upload_at'  => now(),
+        ]);
 
-                $this->createHistory($submission, 'Mahasiswa mengunggah file.');
-
-                return redirect()->route('courses.show', $finalTask->course_id)->with('success', $msg);
-            });
-
-        } catch (\Exception $e) {
-            return back()->with('error', 'Gagal menyimpan: ' . $e->getMessage());
-        }
+        return redirect()->route('courses.show', $submission->finalTask->course_id)
+                         ->with('success', 'Tugas perbaikan berhasil dikirim.');
     }
 
     /**
@@ -94,54 +108,82 @@ class FinalTaskController extends Controller
      */
     public function approve(Request $request, $id)
     {
+        $statusInput = strtoupper($request->status);
+
         $request->validate([
             'status' => 'required|in:ACC,REVISI',
             'notes'  => 'required_if:status,REVISI|nullable|string'
         ]);
 
-        return DB::transaction(function () use ($request, $id) {
+        return DB::transaction(function () use ($request, $id, $statusInput) {
             $submission = Submission::lockForUpdate()->findOrFail($id);
             $user = Auth::user();
-            $statusValue = $request->status;
             $now = now();
-            $role = strtolower($user->role);
-
-            // 1. CEK DOUBLE SUBMIT: Ambil status saat ini berdasarkan role
-            $currentStatus = '';
-            if ($role === 'aslab') $currentStatus = $submission->aslab_status;
-            elseif ($role === 'laboran') $currentStatus = $submission->laboran_status;
-            elseif ($role === 'dosen') $currentStatus = $submission->dosen_status;
+            $role = strtoupper($user->role);
 
             // Jika status baru sama dengan status lama (khusus REVISI), batalkan proses agar tidak double history
-            // Untuk ACC biasanya boleh lewat jika ingin mengupdate timestamp ACC
-            if ($currentStatus === $statusValue && $statusValue === 'REVISI') {
+            $currentStatus = '';
+            if ($role === 'ASLAB') $currentStatus = strtoupper($submission->aslab_status);
+            elseif ($role === 'LABORAN') $currentStatus = strtoupper($submission->laboran_status);
+            elseif ($role === 'DOSEN') $currentStatus = strtoupper($submission->dosen_status);
+
+            if ($currentStatus === $statusInput && $statusInput === 'REVISI') {
                 return redirect()->back()->with('info', "Status sudah ditandai sebagai REVISI.");
             }
 
-            // 2. Update Status
-            if ($role === 'aslab') {
-                $submission->aslab_status = $statusValue;
-                $submission->aslab_acc_at = ($statusValue === 'ACC' ? $now : null);
-            } elseif ($role === 'laboran') {
-                $submission->laboran_status = $statusValue;
-                $submission->laboran_acc_at = ($statusValue === 'ACC' ? $now : null);
-            } elseif ($role === 'dosen') {
-                $submission->dosen_status = $statusValue;
-                $submission->dosen_acc_at = ($statusValue === 'ACC' ? $now : null);
+            if ($role === 'ASLAB') {
+                if ($statusInput === 'ACC') {
+                    $submission->aslab_status = 'ACC';
+                    $submission->aslab_acc_at = $now;
+                } else {
+                    $this->createHistory($submission, $request->notes);
+                    $submission->aslab_status = 'REVISI';
+                    $submission->aslab_acc_at = null;
+                    $submission->laboran_status = 'PENDING';
+                    $submission->laboran_acc_at = null;
+                    $submission->dosen_status = 'PENDING';
+                    $submission->dosen_acc_at = null;
+                }
+            } elseif ($role === 'LABORAN') {
+                if (strtoupper($submission->aslab_status) !== 'ACC') {
+                    return back()->with('error', 'Menunggu verifikasi Asisten Laboratorium.');
+                }
+
+                if ($statusInput === 'ACC') {
+                    $submission->laboran_status = 'ACC';
+                    $submission->laboran_acc_at = $now;
+                } else {
+                    $this->createHistory($submission, $request->notes);
+                    $submission->laboran_status = 'REVISI';
+                    $submission->laboran_acc_at = null;
+                    $submission->dosen_status = 'PENDING';
+                    $submission->dosen_acc_at = null;
+                }
+            } elseif ($role === 'DOSEN') {
+                if (strtoupper($submission->aslab_status) !== 'ACC' || strtoupper($submission->laboran_status) !== 'ACC') {
+                    return back()->with('error', 'Menunggu verifikasi Aslab & Laboran.');
+                }
+
+                if ($statusInput === 'ACC') {
+                    $submission->dosen_status = 'ACC';
+                    $submission->dosen_acc_at = $now;
+                } else {
+                    $this->createHistory($submission, $request->notes);
+                    $submission->dosen_status = 'REVISI';
+                    $submission->dosen_acc_at = null;
+                }
             }
 
+            // Hitung ulang is_completed
             $submission->is_completed = (
-                $submission->aslab_status === 'ACC' && 
-                $submission->laboran_status === 'ACC' && 
-                $submission->dosen_status === 'ACC'
+                strtoupper($submission->aslab_status) === 'ACC' && 
+                strtoupper($submission->laboran_status) === 'ACC' && 
+                strtoupper($submission->dosen_status) === 'ACC'
             );
 
             $submission->save();
 
-            // 3. Buat History
-            $this->createHistory($submission, $request->notes ?? "Status diubah menjadi $statusValue oleh $user->role");
-
-            return redirect()->back()->with('success', "Status berhasil diupdate menjadi $statusValue");
+            return redirect()->back()->with('success', "Status berhasil diupdate menjadi $statusInput");
         });
     }
 

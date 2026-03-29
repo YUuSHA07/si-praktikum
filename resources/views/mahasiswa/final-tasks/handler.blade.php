@@ -29,28 +29,25 @@
     </div>
 
     {{-- Container Utama --}}
-    <div id="main_layout_container" class="flex flex-col lg:flex-row gap-8 h-[calc(100vh-200px)] relative">
+    <div id="main_layout_container" class="flex flex-col lg:flex-row gap-8 h-[calc(100vh-180px)] relative">
         
         {{-- PANEL PREVIEW (Kiri) --}}
         <div id="preview_panel" class="lg:w-2/3 bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col relative transition-all duration-300">
             <div id="preview_header" class="p-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
                 <div class="flex items-center gap-3">
-                    <span class="px-3 py-1 bg-indigo-600 text-white text-[9px] font-black rounded-lg uppercase tracking-widest">
+                    <span class="px-3 py-1 bg-slate-800 text-white text-[9px] font-black rounded-lg uppercase tracking-widest">
                         FINAL
                     </span>
-                    <span id="preview_title" class="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Laporan Preview</span>
+                    <span id="preview_title" class="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Document Preview</span>
                 </div>
                 <div id="compare_badge" class="hidden px-4 py-1.5 bg-amber-500 text-white text-[8px] font-black rounded-full uppercase tracking-widest animate-pulse">
-                    Mode Perbandingan Aktif
+                    Mode Perbandingan Layar Penuh
                 </div>
             </div>
 
             <div id="preview_wrapper" class="flex-1 p-6 bg-slate-50 relative">
                 <div id="placeholder_screen" class="absolute inset-0 flex flex-col items-center justify-center text-center p-12">
-                    <div class="w-16 h-16 bg-white rounded-3xl flex items-center justify-center shadow-sm mb-4">
-                        <svg class="w-8 h-8 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    </div>
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Masukkan Link G-Drive untuk Preview</p>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Menunggu Link G-Drive</p>
                 </div>
 
                 {{-- Konten Utama --}}
@@ -60,73 +57,47 @@
 
         {{-- PANEL FORM (Kanan) --}}
         <div id="form_panel" class="lg:w-1/3 flex flex-col gap-6 overflow-y-auto pr-2 custom-scrollbar">
-            
-            {{-- Box Input --}}
-            <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden">
+            <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
                 @php 
-                    $isExpired = $finalTask->deadline && now()->gt($finalTask->deadline);
-                    $isCompleted = $submission && $submission->is_completed;
+                    // Mengecek apakah ada pihak yang meminta revisi
                     $isRevision = $submission && (strtoupper($submission->aslab_status) == 'REVISI' || strtoupper($submission->laboran_status) == 'REVISI' || strtoupper($submission->dosen_status) == 'REVISI');
                 @endphp
 
-                {{-- Overlay jika selesai --}}
-                @if($isCompleted)
-                <div class="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center text-center p-6">
-                    <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                    </div>
-                    <h4 class="font-black text-gray-800 text-xs uppercase tracking-widest">Selesai & ACC</h4>
-                </div>
-                @endif
+                <h3 class="text-xl font-black text-gray-800 tracking-tight uppercase mb-6">Submission</h3>
 
-                <h3 class="text-xl font-black text-gray-800 tracking-tight uppercase mb-6">Submission Final</h3>
-
-                <form action="{{ route('final-tasks.submit', $finalTask->id) }}" method="POST" class="space-y-6">
+                <form action="{{ $submission ? route('final-tasks.update', $submission->id) : route('final-tasks.submit', $finalTask->id) }}" method="POST" class="space-y-6">
                     @csrf
+                    @if($submission) @method('PUT') @endif
                     <div>
-                        <label class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2.5">Link G-Drive Laporan</label>
+                        <label class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2.5">Link G-Drive Baru</label>
+                        {{-- PERBAIKAN: Menghapus pengecekan $isRevision agar link dari database selalu muncul untuk diedit --}}
                         <input type="url" name="submission_link" id="input_link" required 
-                               value="{{ old('submission_link', $submission->submission_link ?? '') }}"
+                               value="{{ $submission->submission_link ?? '' }}"
                                oninput="handleLivePreview()"
-                               class="block w-full rounded-2xl border-gray-100 text-sm font-bold p-4 bg-gray-50 text-indigo-600 focus:ring-4 focus:ring-indigo-50 focus:border-indigo-600 transition-all outline-none"
-                               placeholder="https://drive.google.com/...">
+                               class="block w-full rounded-2xl border-gray-100 text-sm font-bold p-4 bg-gray-50 text-indigo-600">
                     </div>
-
-                    <div>
-                        <label class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2.5">Catatan (Opsional)</label>
-                        <textarea name="notes" rows="3" 
-                                  class="w-full rounded-2xl border-gray-100 bg-gray-50 text-sm font-medium p-4 focus:ring-4 focus:ring-indigo-50 outline-none resize-none" 
-                                  placeholder="Pesan untuk Dosen/Aslab...">{{ old('notes', $submission->notes ?? '') }}</textarea>
-                    </div>
-
-                    <button type="submit" class="w-full py-5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl {{ $isRevision ? 'bg-red-600 shadow-red-100' : 'bg-indigo-600 shadow-indigo-100' }} text-white hover:opacity-90 transition active:scale-95">
-                        {{ $submission ? 'Perbarui Laporan Final' : 'Kumpul Laporan Final' }}
+                    <button type="submit" class="w-full py-5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl {{ $isRevision ? 'bg-red-600' : 'bg-indigo-600' }} text-white">
+                        Simpan Perubahan
                     </button>
                 </form>
             </div>
 
-            {{-- Riwayat Revisi --}}
+            {{-- Riwayat --}}
             @if($submission && $submission->histories && $submission->histories->count() > 0)
             <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
-                <h4 class="text-[9px] font-black text-gray-400 uppercase mb-6 tracking-widest flex items-center gap-2">
-                    <span class="w-1.5 h-3 bg-indigo-600 rounded-full"></span> Log Perubahan & Feedback
-                </h4>
+                <h4 class="text-[9px] font-black text-gray-400 uppercase mb-6 tracking-widest">Log Perubahan</h4>
                 <div class="space-y-4">
                     @foreach($submission->histories->sortByDesc('created_at') as $index => $history)
-                    <div class="p-5 bg-gray-50 rounded-2xl border border-gray-100 group">
+                    <div class="p-5 bg-gray-50 rounded-2xl border border-gray-100">
                         <div class="flex justify-between items-center mb-3">
-                            <span class="text-[8px] font-black text-indigo-600 uppercase">Versi #{{ $history->iteration ?? ($submission->histories->count() - $index) }}</span>
+                            <span class="text-[8px] font-black text-red-600 uppercase">Versi #{{ $history->iteration ?? ($submission->histories->count() - $index) }}</span>
                             <button type="button" 
-                                    onclick="compareFilesFullscreen('{{ $history->drive_link }}')" 
-                                    class="text-[8px] font-black text-slate-400 group-hover:text-indigo-600 uppercase tracking-widest transition flex items-center gap-1">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                    onclick="compareFilesFullscreen('{{ addslashes($history->drive_link) }}')" 
+                                    class="text-[8px] font-black text-indigo-600 uppercase tracking-widest hover:underline">
                                 Bandingkan
                             </button>
                         </div>
-                        <p class="text-[11px] text-gray-600 italic leading-relaxed">"{{ $history->feedback ?? 'Tidak ada catatan.' }}"</p>
-                        <div class="mt-2 text-[7px] text-gray-400 font-bold uppercase tracking-widest">
-                            {{ $history->created_at->format('d M Y • H:i') }}
-                        </div>
+                        <p class="text-[11px] text-gray-600 italic">"{{ $history->feedback ?? 'Tidak ada catatan.' }}"</p>
                     </div>
                     @endforeach
                 </div>
@@ -169,50 +140,54 @@
             const historyId = extractId(historyLink);
             const currentId = extractId(inputLink.value);
 
-            if (!historyId) return alert("ID File riwayat tidak ditemukan!");
+            if (!historyId) return alert("ID File tidak valid!");
 
+            // Masuk Mode Fullscreen (Atas, Bawah, Kiri, Kanan)
             enterFullscreen();
 
             dynamicContent.innerHTML = `
                 <div class="grid grid-cols-2 gap-4 h-full p-2 bg-slate-900">
                     <div class="flex flex-col h-full">
-                        <div class="flex justify-between p-3 bg-slate-800 rounded-t-2xl border-b border-slate-700">
+                        <div class="flex justify-between p-2 bg-slate-800 rounded-t-xl border-b border-slate-700">
                             <span class="text-[9px] font-black text-red-400 uppercase tracking-widest">VERSI LAMA (REVISI)</span>
                         </div>
                         <iframe src="https://drive.google.com/file/d/${historyId}/preview" 
-                                class="flex-1 w-full border-none bg-white rounded-b-2xl"></iframe>
+                                class="flex-1 w-full border-none bg-white rounded-b-xl"></iframe>
                     </div>
                     <div class="flex flex-col h-full">
-                        <div class="flex justify-between p-3 bg-slate-800 rounded-t-2xl border-b border-slate-700">
-                            <span class="text-[9px] font-black text-indigo-400 uppercase tracking-widest">DRAFT TERBARU ANDA</span>
-                            <button onclick="handleLivePreview()" class="text-[9px] font-black text-white hover:text-red-400 uppercase tracking-widest flex items-center gap-1">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                Tutup
-                            </button>
+                        <div class="flex justify-between p-2 bg-slate-800 rounded-t-xl border-b border-slate-700">
+                            <span class="text-[9px] font-black text-indigo-400 uppercase tracking-widest">DRAFT BARU</span>
+                            <button onclick="handleLivePreview()" class="text-[9px] font-black text-white hover:text-red-400 uppercase">Tutup [X]</button>
                         </div>
                         <iframe src="https://drive.google.com/file/d/${currentId || ''}/preview" 
-                                class="flex-1 w-full border-none bg-white rounded-b-2xl"></iframe>
+                                class="flex-1 w-full border-none bg-white rounded-b-xl"></iframe>
                     </div>
                 </div>
             `;
         }
 
         function enterFullscreen() {
+            // Paksa preview panel menutupi seluruh viewport (Layar Penuh)
             previewPanel.classList.add('fixed', 'inset-0', 'z-[100]', 'w-screen', 'h-screen', 'rounded-none');
             previewPanel.classList.remove('lg:w-2/3', 'rounded-[2.5rem]');
+            
+            // Hilangkan padding di wrapper agar iframe mentok ke bawah
             previewWrapper.classList.remove('p-6');
             previewWrapper.classList.add('p-0');
+            
             badge.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
+            document.body.style.overflow = 'hidden'; // Matikan scroll body
         }
 
         function exitFullscreen() {
             previewPanel.classList.remove('fixed', 'inset-0', 'z-[100]', 'w-screen', 'h-screen', 'rounded-none');
             previewPanel.classList.add('lg:w-2/3', 'rounded-[2.5rem]');
+            
             previewWrapper.classList.add('p-6');
             previewWrapper.classList.remove('p-0');
+            
             badge.classList.add('hidden');
-            document.body.style.overflow = 'auto';
+            document.body.style.overflow = 'auto'; // Aktifkan scroll body
         }
 
         window.onload = () => { if (inputLink.value) handleLivePreview(); };
@@ -220,7 +195,14 @@
 
     <style>
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
-        #dynamic_content { height: 100%; width: 100%; display: flex; flex-direction: column; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+        
+        /* Memastikan area konten dinamis mengambil 100% tinggi yang tersedia */
+        #dynamic_content {
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
     </style>
 </x-app-layout>
