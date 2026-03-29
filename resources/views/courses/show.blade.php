@@ -125,7 +125,7 @@
                     </div>
                 </div>
 
-                @if(auth()->user()->role !== 'Mahasiswa')
+                @if(strtoupper(auth()->user()->role) !== 'MAHASISWA')
                 <div class="mt-8 pt-8 border-t border-gray-50 space-y-3">
                     <a href="{{ route('attendance.report', $course->id) }}" class="w-full flex items-center justify-center gap-2 px-4 py-4 bg-indigo-50 text-indigo-700 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition border border-indigo-100 shadow-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
@@ -154,6 +154,50 @@
                                     <span class="text-[9px] font-black uppercase tracking-widest text-indigo-500 italic">Laporan Praktikum Final</span>
                                 </div>
                                 <h4 class="font-black text-gray-800 text-xl leading-tight group-hover:text-indigo-600 transition">Final Project & Laporan Semester</h4>
+                                
+                                {{-- BLOK BARU: STATUS FINAL TASK (Khusus Mahasiswa) --}}
+                                @if(strtoupper(auth()->user()->role) === 'MAHASISWA')
+                                    @php 
+                                        $finalSub = \App\Models\Submission::where('final_task_id', $course->finalTask->id)
+                                                        ->where('student_id', auth()->id())
+                                                        ->where('is_final', true)
+                                                        ->first(); 
+                                    @endphp
+                                    @if($finalSub)
+                                        <div class="mt-5 space-y-2.5">
+                                            {{-- Aslab Status --}}
+                                            <div class="flex items-center gap-3 text-[9px] font-black uppercase tracking-tighter">
+                                                <span class="text-indigo-400 w-24 text-[8px]">Status Aslab:</span>
+                                                <span class="px-2 py-0.5 rounded-md {{ $finalSub->aslab_status == 'ACC' ? 'bg-emerald-50 text-emerald-600' : ($finalSub->aslab_status == 'REVISI' ? 'bg-red-50 text-red-600 animate-pulse' : 'bg-amber-50 text-amber-600') }}">
+                                                    {{ $finalSub->aslab_status }}
+                                                </span>
+                                                @if($finalSub->aslab_status == 'ACC' && $finalSub->aslab_acc_at)
+                                                    <span class="text-indigo-300 text-[8px] border-l border-indigo-200 pl-3">{{ \Carbon\Carbon::parse($finalSub->aslab_acc_at)->format('d M Y') }}</span>
+                                                @endif
+                                            </div>
+                                            {{-- Laboran Status --}}
+                                            <div class="flex items-center gap-3 text-[9px] font-black uppercase tracking-tighter">
+                                                <span class="text-indigo-400 w-24 text-[8px]">Status Laboran:</span>
+                                                <span class="px-2 py-0.5 rounded-md {{ $finalSub->laboran_status == 'ACC' ? 'bg-emerald-50 text-emerald-600' : ($finalSub->laboran_status == 'REVISI' ? 'bg-red-50 text-red-600 animate-pulse' : 'bg-amber-50 text-amber-600') }}">
+                                                    {{ $finalSub->laboran_status }}
+                                                </span>
+                                                @if($finalSub->laboran_status == 'ACC' && $finalSub->laboran_acc_at)
+                                                    <span class="text-indigo-300 text-[8px] border-l border-indigo-200 pl-3">{{ \Carbon\Carbon::parse($finalSub->laboran_acc_at)->format('d M Y') }}</span>
+                                                @endif
+                                            </div>
+                                            {{-- Dosen Status --}}
+                                            <div class="flex items-center gap-3 text-[9px] font-black uppercase tracking-tighter">
+                                                <span class="text-indigo-400 w-24 text-[8px]">Status Dosen:</span>
+                                                <span class="px-2 py-0.5 rounded-md {{ $finalSub->dosen_status == 'ACC' ? 'bg-emerald-50 text-emerald-600' : ($finalSub->dosen_status == 'REVISI' ? 'bg-red-50 text-red-600 animate-pulse' : 'bg-amber-50 text-amber-600') }}">
+                                                    {{ $finalSub->dosen_status }}
+                                                </span>
+                                                @if($finalSub->dosen_status == 'ACC' && $finalSub->dosen_acc_at)
+                                                    <span class="text-indigo-300 text-[8px] border-l border-indigo-200 pl-3">{{ \Carbon\Carbon::parse($finalSub->dosen_acc_at)->format('d M Y') }}</span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endif
+                                @endif
                             </div>
 
                             <div class="flex items-center gap-3">
@@ -184,7 +228,7 @@
                                         <span class="px-3 py-1 bg-slate-800 text-white text-[9px] font-black rounded-lg uppercase tracking-[0.1em]">
                                             P{{ $meeting->meeting_number }}
                                         </span>
-                                        @if(auth()->user()->role === 'Mahasiswa')
+                                        @if(strtoupper(auth()->user()->role) === 'MAHASISWA')
                                             @php $attendance = $meeting->attendances->where('student_id', auth()->id())->first(); @endphp
                                             <span class="text-[9px] font-black uppercase tracking-widest {{ $attendance ? 'text-emerald-500' : 'text-gray-300' }}">
                                                 {{ $attendance ? '● Hadir' : '○ Belum Presensi' }}
@@ -193,26 +237,35 @@
                                     </div>
                                     <h4 class="font-black text-gray-800 text-xl leading-tight group-hover:text-indigo-600 transition">{{ $meeting->title }}</h4>
                                     
-                                    @if(auth()->user()->role === 'Mahasiswa' && $sub)
-                                    <div class="mt-5 space-y-3">
+                                    {{-- BLOK UPDATE: STATUS TUGAS PERTEMUAN (Khusus Mahasiswa) --}}
+                                    @if(strtoupper(auth()->user()->role) === 'MAHASISWA' && $sub)
+                                    <div class="mt-5 space-y-2.5">
                                         <div class="flex items-center gap-3 text-[9px] font-black uppercase tracking-tighter">
-                                            <span class="text-gray-400 w-20 text-[8px]">Status Aslab:</span>
+                                            <span class="text-gray-400 w-24 text-[8px]">Status Aslab:</span>
                                             <span class="px-2 py-0.5 rounded-md {{ $sub->aslab_status == 'ACC' ? 'bg-emerald-50 text-emerald-600' : ($sub->aslab_status == 'REVISI' ? 'bg-red-50 text-red-600 animate-pulse' : 'bg-amber-50 text-amber-600') }}">
                                                 {{ $sub->aslab_status }}
                                             </span>
+                                            {{-- Tambahan Tanggal ACC Aslab --}}
+                                            @if($sub->aslab_status == 'ACC' && $sub->aslab_acc_at)
+                                                <span class="text-gray-400 text-[8px] border-l border-gray-200 pl-3">{{ \Carbon\Carbon::parse($sub->aslab_acc_at)->format('d M Y') }}</span>
+                                            @endif
                                         </div>
                                         <div class="flex items-center gap-3 text-[9px] font-black uppercase tracking-tighter">
-                                            <span class="text-gray-400 w-20 text-[8px]">Status Laboran:</span>
+                                            <span class="text-gray-400 w-24 text-[8px]">Status Laboran:</span>
                                             <span class="px-2 py-0.5 rounded-md {{ $sub->laboran_status == 'ACC' ? 'bg-emerald-50 text-emerald-600' : ($sub->laboran_status == 'REVISI' ? 'bg-red-50 text-red-600 animate-pulse' : 'bg-amber-50 text-amber-600') }}">
                                                 {{ $sub->laboran_status }}
                                             </span>
+                                            {{-- Tambahan Tanggal ACC Laboran --}}
+                                            @if($sub->laboran_status == 'ACC' && $sub->laboran_acc_at)
+                                                <span class="text-gray-400 text-[8px] border-l border-gray-200 pl-3">{{ \Carbon\Carbon::parse($sub->laboran_acc_at)->format('d M Y') }}</span>
+                                            @endif
                                         </div>
                                     </div>
                                     @endif
                                 </div>
 
                                 <div class="flex flex-wrap items-center gap-3">
-                                    @if(in_array(auth()->user()->role, ['Dosen', 'Aslab', 'Laboran']))
+                                    @if(in_array(strtoupper(auth()->user()->role), ['DOSEN', 'ASLAB', 'LABORAN']))
                                         <a href="{{ route('attendance.index', $meeting->id) }}" class="px-5 py-3 bg-amber-50 text-amber-700 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-amber-100 hover:bg-amber-100 transition shadow-sm text-center min-w-[100px]">
                                             Presensi
                                         </a>
@@ -221,7 +274,7 @@
                                         </a>
                                     @endif
 
-                                    @if(auth()->user()->role === 'Mahasiswa')
+                                    @if(strtoupper(auth()->user()->role) === 'MAHASISWA')
                                         <a href="{{ route('mahasiswa.submissions.manage', $meeting->id) }}" 
                                            class="px-5 py-3 {{ $sub ? ($sub->aslab_status == 'REVISI' ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700') : 'bg-indigo-600 hover:bg-indigo-700' }} text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl transition active:scale-95 text-center min-w-[120px]">
                                             {{ $sub ? 'Kelola Tugas' : 'Kumpul Tugas' }}
@@ -250,7 +303,7 @@
     </div>
 
     {{-- MODALS SECTION --}}
-    @if(in_array(auth()->user()->role, ['Dosen', 'Aslab', 'Laboran']))
+    @if(in_array(strtoupper(auth()->user()->role), ['DOSEN', 'ASLAB', 'LABORAN']))
     
     {{-- Modal Tambah Pertemuan --}}
     <div id="modalMeeting" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden items-center justify-center z-50 p-4">

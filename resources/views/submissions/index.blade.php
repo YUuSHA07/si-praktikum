@@ -22,19 +22,15 @@
         @php
             $totalStudents = $meeting->course->students->count();
             $submitted = count($submissions);
-            $laboranAcc = collect($submissions)->filter(fn($s) => $s->laboran_status === 'ACC')->count();
-            $aslabAcc = collect($submissions)->filter(fn($s) => $s->aslab_status === 'ACC')->count();
-            $belumMengumpul = $totalStudents - $submitted;
+            $laboranAcc = collect($submissions)->filter(fn($s) => strtoupper($s->laboran_status) === 'ACC')->count();
+            $aslabAcc = collect($submissions)->filter(fn($s) => strtoupper($s->aslab_status) === 'ACC')->count();
         @endphp
 
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-            <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-md transition">
-                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Total Mahasiswa</p>
-                <h4 class="text-3xl font-black text-gray-800">{{ $totalStudents }}</h4>
-            </div>
-            <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm border-l-4 border-l-red-500 hover:shadow-md transition">
-                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Belum Kumpul</p>
-                <h4 class="text-3xl font-black text-red-600">{{ $belumMengumpul }}</h4>
+        {{-- Grid diubah menjadi 3 kolom agar proporsional --}}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm border-l-4 border-l-emerald-500 hover:shadow-md transition">
+                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Sudah Kumpul</p>
+                <h4 class="text-3xl font-black text-emerald-600">{{ $submitted }} <span class="text-lg text-gray-300">/ {{ $totalStudents }}</span></h4>
             </div>
             <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm border-l-4 border-l-amber-500 hover:shadow-md transition">
                 <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Review Aslab (ACC)</p>
@@ -55,16 +51,17 @@
                             <th class="px-8 py-6 tracking-widest">Mahasiswa</th>
                             <th class="px-8 py-6 tracking-widest text-center">Waktu Kumpul</th>
                             <th class="px-8 py-6 tracking-widest text-center">Riwayat</th>
-                            <th class="px-8 py-6 tracking-widest text-center">Status Aslab</th>
-                            <th class="px-8 py-6 tracking-widest text-center">Status Laboran</th>
-                            <th class="px-8 py-6 tracking-widest text-right uppercase">Aksi</th>
+                            <th class="px-4 py-6 tracking-widest text-center">Status Aslab</th>
+                            <th class="px-4 py-6 tracking-widest text-center">Status Laboran</th>
+                            {{-- Ubah text-right menjadi text-center di sini --}}
+                            <th class="px-8 py-6 tracking-widest text-center uppercase">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50">
                         @foreach($meeting->course->students as $student)
                             @php $sub = $submissions[$student->id] ?? null; @endphp
                             <tr class="hover:bg-gray-50/50 transition-all group">
-                                <td class="px-8 py-5">
+                                <td class="px-8 py-5 whitespace-nowrap">
                                     <div class="flex items-center gap-4">
                                         <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center overflow-hidden shadow-inner border border-gray-50">
                                             @if($student->avatar)
@@ -81,7 +78,7 @@
                                 </td>
                                 
                                 {{-- Waktu Kumpul --}}
-                                <td class="px-8 py-5 text-center">
+                                <td class="px-8 py-5 text-center whitespace-nowrap">
                                     @if($sub)
                                         <div class="inline-flex flex-col text-[11px] font-black leading-tight text-center">
                                             <span class="text-gray-700 uppercase">{{ \Carbon\Carbon::parse($sub->last_upload_at)->timezone('Asia/Jakarta')->format('d M Y') }}</span>
@@ -93,9 +90,9 @@
                                 </td>
 
                                 {{-- Riwayat --}}
-                                <td class="px-8 py-5 text-center">
+                                <td class="px-8 py-5 text-center whitespace-nowrap">
                                     @if($sub && $sub->histories->count() > 0)
-                                        <span class="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-black shadow-sm border border-indigo-100">
+                                        <span class="inline-block whitespace-nowrap px-3 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-black shadow-sm border border-indigo-100">
                                             {{ $sub->histories->count() }}x Revisi
                                         </span>
                                     @else
@@ -104,24 +101,27 @@
                                 </td>
                                 
                                 {{-- Status Aslab --}}
-                                <td class="px-8 py-5 text-center">
+                                <td class="px-4 py-5 text-center whitespace-nowrap">
                                     @if($sub)
                                         @php
-                                            $sAslab = strtoupper($sub->aslab_status);
+                                            $sAslab = strtoupper($sub->aslab_status ?? 'PENDING');
                                             $colorAslab = match($sAslab) {
                                                 'ACC'    => 'bg-emerald-50 text-emerald-600 border-emerald-100',
                                                 'REVISI' => 'bg-red-50 text-red-600 border-red-100',
                                                 default  => 'bg-amber-50 text-amber-600 border-amber-100',
                                             };
                                         @endphp
-                                        <div class="flex flex-col items-center gap-2">
-                                            <span class="px-4 py-2 {{ $colorAslab }} rounded-xl text-[9px] font-black uppercase border shadow-sm">{{ $sAslab }}</span>
+                                        <div class="flex flex-col items-center gap-1.5">
+                                            <span class="whitespace-nowrap px-3 py-1.5 {{ $colorAslab }} rounded-xl text-[9px] font-black uppercase border shadow-sm">{{ $sAslab }}</span>
+                                            @if($sAslab === 'ACC' && $sub->aslab_acc_at)
+                                                <span class="whitespace-nowrap text-[8px] font-bold text-gray-400 uppercase tracking-widest">{{ \Carbon\Carbon::parse($sub->aslab_acc_at)->format('d/m/Y') }}</span>
+                                            @endif
                                         </div>
                                     @endif
                                 </td>
 
                                 {{-- Status Laboran --}}
-                                <td class="px-8 py-5 text-center">
+                                <td class="px-4 py-5 text-center whitespace-nowrap">
                                     @if($sub)
                                         @php
                                             $sLab = strtoupper($sub->laboran_status ?? 'PENDING');
@@ -131,32 +131,33 @@
                                                 default  => 'bg-slate-50 text-slate-400 border-slate-100',
                                             };
                                         @endphp
-                                        <div class="flex flex-col items-center gap-2">
-                                            <span class="px-4 py-2 {{ $colorLab }} rounded-xl text-[9px] font-black uppercase border shadow-sm">{{ $sLab }}</span>
+                                        <div class="flex flex-col items-center gap-1.5">
+                                            <span class="whitespace-nowrap px-3 py-1.5 {{ $colorLab }} rounded-xl text-[9px] font-black uppercase border shadow-sm">{{ $sLab }}</span>
+                                            @if($sLab === 'ACC' && $sub->laboran_acc_at)
+                                                <span class="whitespace-nowrap text-[8px] font-bold text-gray-400 uppercase tracking-widest">{{ \Carbon\Carbon::parse($sub->laboran_acc_at)->format('d/m/Y') }}</span>
+                                            @endif
                                         </div>
                                     @endif
                                 </td>
 
                                 {{-- AKSI --}}
-                                <td class="px-8 py-5 text-right">
+                                {{-- Ubah text-right menjadi text-center di sini --}}
+                                <td class="px-8 py-5 text-center whitespace-nowrap">
                                     @if($sub)
-                                        {{-- LOGIKA: Cek Role Dosen --}}
                                         @if(strtoupper(auth()->user()->role) === 'DOSEN')
-                                            {{-- MENGGUNAKAN submission_link sesuai dengan Controller Anda --}}
                                             <a href="{{ $sub->submission_link }}" 
                                                target="_blank"
-                                               class="inline-block bg-emerald-600 text-white px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase hover:bg-emerald-700 shadow-xl shadow-emerald-100 active:scale-95 transition-all tracking-widest">
+                                               class="whitespace-nowrap inline-block bg-emerald-600 text-white px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase hover:bg-emerald-700 shadow-xl shadow-emerald-100 active:scale-95 transition-all tracking-widest">
                                                 Lihat File
                                             </a>
                                         @else
-                                            {{-- Role lain (Aslab/Laboran) tetap ke halaman review --}}
                                             <a href="{{ route('submissions.handler', $sub->id) }}" 
-                                               class="inline-block bg-indigo-600 text-white px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase hover:bg-indigo-700 shadow-xl shadow-indigo-100 active:scale-95 transition-all tracking-widest">
+                                               class="whitespace-nowrap inline-block bg-indigo-600 text-white px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase hover:bg-indigo-700 shadow-xl shadow-indigo-100 active:scale-95 transition-all tracking-widest">
                                                 Review File
                                             </a>
                                         @endif
                                     @else
-                                        <button disabled class="text-gray-300 text-[10px] font-black italic tracking-widest opacity-50">N/A</button>
+                                        <button disabled class="whitespace-nowrap text-gray-300 text-[10px] font-black italic tracking-widest opacity-50">N/A</button>
                                     @endif
                                 </td>
                             </tr>

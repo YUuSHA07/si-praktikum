@@ -44,7 +44,6 @@
             $aslabAcc = collect($submissions)->filter(fn($s) => strtoupper($s->aslab_status) === 'ACC')->count();
         @endphp
 
-        {{-- Grid diperbarui menjadi 4 kolom --}}
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
             <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm border-l-4 border-l-emerald-500 hover:shadow-md transition">
                 <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Sudah Kumpul</p>
@@ -76,7 +75,8 @@
                             <th class="px-4 py-6 tracking-widest text-center whitespace-nowrap">Status Aslab</th>
                             <th class="px-4 py-6 tracking-widest text-center whitespace-nowrap">Status Laboran</th>
                             <th class="px-4 py-6 tracking-widest text-center whitespace-nowrap">Status Dosen</th>
-                            <th class="px-8 py-6 tracking-widest text-right uppercase whitespace-nowrap">Aksi</th>
+                            {{-- Ubah text-right menjadi text-center --}}
+                            <th class="px-8 py-6 tracking-widest text-center uppercase whitespace-nowrap">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50">
@@ -183,7 +183,8 @@
                                 </td>
 
                                 {{-- AKSI --}}
-                                <td class="px-8 py-5 text-right whitespace-nowrap">
+                                {{-- Ubah text-right menjadi text-center --}}
+                                <td class="px-8 py-5 text-center whitespace-nowrap">
                                     @if($sub)
                                         @if(strtoupper(auth()->user()->role) === 'DOSEN')
                                             <a href="{{ $sub->submission_link }}" 
@@ -198,7 +199,7 @@
                                             </a>
                                         @endif
                                     @else
-                                        <button disabled class="whitespace-nowrap text-gray-300 text-[10px] font-black italic tracking-widest opacity-50">N/A</button>
+                                        <span class="whitespace-nowrap text-gray-300 text-[10px] font-black italic tracking-widest opacity-50 block text-center">N/A</span>
                                     @endif
                                 </td>
                             </tr>
