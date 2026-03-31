@@ -16,6 +16,25 @@
                 <h2 class="text-3xl font-black text-gray-800 tracking-tight uppercase">Monitoring Presensi & Tugas</h2>
                 <p class="text-[11px] font-bold text-gray-400 mt-1 uppercase tracking-widest">{{ $meeting->course->course_name }} — Pertemuan #{{ $meeting->meeting_number }}</p>
             </div>
+
+            {{-- PANEL PENGATURAN DEADLINE --}}
+            @if(in_array(strtoupper(auth()->user()->role), ['ASLAB', 'LABORAN', 'DOSEN']))
+            <div class="w-full md:w-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                <form action="{{ route('meetings.update-deadline', $meeting->id) }}" method="POST" class="flex flex-col sm:flex-row items-end gap-3">
+                    @csrf
+                    @method('PUT')
+                    <div>
+                        <label class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Batas Waktu</label>
+                        <input type="datetime-local" name="deadline" 
+                               value="{{ $meeting->deadline ? date('Y-m-d\TH:i', strtotime($meeting->deadline)) : '' }}" 
+                               class="rounded-xl border-gray-200 focus:ring-indigo-600 focus:border-indigo-600 text-xs font-bold text-gray-600" required>
+                    </div>
+                    <button type="submit" class="px-5 py-2.5 bg-slate-900 text-white text-[10px] font-black rounded-xl uppercase tracking-widest hover:bg-slate-800 transition active:scale-95">
+                        Simpan
+                    </button>
+                </form>
+            </div>
+            @endif
         </div>
 
         {{-- STATS OVERVIEW --}}
@@ -48,13 +67,12 @@
                 <table class="w-full text-left border-collapse">
                     <thead class="bg-gray-50/50 text-[10px] uppercase font-black text-gray-400 border-b border-gray-100">
                         <tr>
-                            <th class="px-8 py-6 tracking-widest">Mahasiswa</th>
-                            <th class="px-8 py-6 tracking-widest text-center">Waktu Kumpul</th>
-                            <th class="px-8 py-6 tracking-widest text-center">Riwayat</th>
-                            <th class="px-4 py-6 tracking-widest text-center">Status Aslab</th>
-                            <th class="px-4 py-6 tracking-widest text-center">Status Laboran</th>
-                            {{-- Ubah text-right menjadi text-center di sini --}}
-                            <th class="px-8 py-6 tracking-widest text-center uppercase">Aksi</th>
+                            <th class="px-8 py-6 tracking-widest whitespace-nowrap">Mahasiswa</th>
+                            <th class="px-8 py-6 tracking-widest text-center whitespace-nowrap">Waktu Kumpul</th>
+                            <th class="px-8 py-6 tracking-widest text-center whitespace-nowrap">Riwayat</th>
+                            <th class="px-4 py-6 tracking-widest text-center whitespace-nowrap">Status Aslab</th>
+                            <th class="px-4 py-6 tracking-widest text-center whitespace-nowrap">Status Laboran</th>
+                            <th class="px-8 py-6 tracking-widest text-center uppercase whitespace-nowrap">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50">
@@ -141,7 +159,6 @@
                                 </td>
 
                                 {{-- AKSI --}}
-                                {{-- Ubah text-right menjadi text-center di sini --}}
                                 <td class="px-8 py-5 text-center whitespace-nowrap">
                                     @if($sub)
                                         @if(strtoupper(auth()->user()->role) === 'DOSEN')
@@ -157,7 +174,7 @@
                                             </a>
                                         @endif
                                     @else
-                                        <button disabled class="whitespace-nowrap text-gray-300 text-[10px] font-black italic tracking-widest opacity-50">N/A</button>
+                                        <span class="whitespace-nowrap text-gray-300 text-[10px] font-black italic tracking-widest opacity-50 block text-center">N/A</span>
                                     @endif
                                 </td>
                             </tr>

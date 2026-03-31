@@ -195,6 +195,21 @@ class SubmissionController extends Controller
     }
 
     /**
+     * UPDATE DEADLINE PERTEMUAN (Baru ditambahkan)
+     */
+    public function updateDeadline(Request $request, $id)
+    {
+        $request->validate([
+            'deadline' => 'required|date'
+        ]);
+
+        $meeting = Meeting::findOrFail($id);
+        $meeting->update(['deadline' => $request->deadline]);
+
+        return redirect()->back()->with('success', 'Batas waktu pertemuan berhasil diperbarui!');
+    }
+
+    /**
      * HELPER: Simpan Riwayat Revisi ke tabel SubmissionHistory
      */
     private function createHistory($submission, $notes) {

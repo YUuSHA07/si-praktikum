@@ -3,12 +3,46 @@
         Tugas: {{ $meeting->title }}
     </x-slot>
 
+    @php 
+        $submission = $meeting->submissions->where('student_id', auth()->id())->first();
+        
+        // Cek apakah ada yang meminta revisi
+        $isRevision = $submission && (strtoupper($submission->aslab_status) == 'REVISI' || strtoupper($submission->laboran_status) == 'REVISI');
+        
+        // LOGIKA KUNCI: Kunci jika Aslab & Laboran sudah ACC atau Lewat Deadline
+        $isCompleted = $submission && strtoupper($submission->aslab_status) == 'ACC' && strtoupper($submission->laboran_status) == 'ACC';
+        $isPastDeadline = $meeting->deadline && now()->gt(\Carbon\Carbon::parse($meeting->deadline));
+        $isLocked = $isCompleted || $isPastDeadline;
+    @endphp
+
     {{-- Navigasi Atas --}}
-    <div class="mb-6 flex justify-between items-center">
+    <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <a href="{{ route('courses.show', $meeting->course_id) }}" class="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-indigo-600 transition flex items-center group">
             <svg class="w-4 h-4 mr-2 transform group-hover:-translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             Kembali ke Dashboard
         </a>
+
+        {{-- STATUS BADGES --}}
+        @if($submission)
+            <div class="flex items-center gap-4 bg-white px-6 py-2.5 rounded-2xl border border-gray-100 shadow-sm">
+                <div class="flex flex-col border-r border-gray-100 pr-4">
+                    <span class="text-[7px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Aslab</span>
+                    <span class="text-[9px] font-black {{ strtoupper($submission->aslab_status) === 'ACC' ? 'text-emerald-500' : (strtoupper($submission->aslab_status) === 'REVISI' ? 'text-red-500' : 'text-amber-500') }} uppercase leading-none">{{ $submission->aslab_status }}</span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-[7px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Laboran</span>
+                    <span class="text-[9px] font-black {{ strtoupper($submission->laboran_status) === 'ACC' ? 'text-emerald-500' : (strtoupper($submission->laboran_status) === 'REVISI' ? 'text-red-500' : 'text-amber-500') }} uppercase leading-none">{{ $submission->laboran_status }}</span>
+                </div>
+            </div>
+        @else
+            {{-- KETERANGAN JIKA BELUM MENGUMPULKAN TUGAS --}}
+            <div class="flex items-center bg-red-50 px-6 py-2.5 rounded-2xl border border-red-100 shadow-sm">
+                <span class="text-[9px] font-black text-red-600 uppercase tracking-widest flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Belum Mengumpulkan Tugas
+                </span>
+            </div>
+        @endif
     </div>
 
     {{-- Container Utama --}}
@@ -41,26 +75,64 @@
         {{-- PANEL FORM (Kanan) --}}
         <div id="form_panel" class="lg:w-1/3 flex flex-col gap-6 overflow-y-auto pr-2 custom-scrollbar">
             <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
-                @php 
-                    $submission = $meeting->submissions->where('student_id', auth()->id())->first();
-                    $isRevision = $submission && $submission->aslab_status == 'REVISI';
-                @endphp
-
+                
                 <h3 class="text-xl font-black text-gray-800 tracking-tight uppercase mb-6">Submission</h3>
+
+                {{-- Banner Informasi Terkunci --}}
+                @if($isLocked)
+                    <div class="mb-6 p-5 rounded-2xl border {{ $isCompleted ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100' }} flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 {{ $isCompleted ? 'bg-emerald-200 text-emerald-700' : 'bg-red-200 text-red-700' }}">
+                            @if($isCompleted)
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            @else
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            @endif
+                        </div>
+                        <div>
+                            <h4 class="font-black text-[10px] uppercase tracking-widest {{ $isCompleted ? 'text-emerald-800' : 'text-red-800' }} mb-1">
+                                {{ $isCompleted ? 'Selesai & ACC' : 'Waktu Habis' }}
+                            </h4>
+                            <p class="text-[10px] font-bold {{ $isCompleted ? 'text-emerald-600' : 'text-red-600' }} leading-tight">
+                                {{ $isCompleted ? 'Tugas telah disetujui sepenuhnya.' : 'Batas waktu pengumpulan telah ditutup.' }}
+                            </p>
+                        </div>
+                    </div>
+                @endif
 
                 <form action="{{ $submission ? route('submissions.update', $submission->id) : route('submissions.store', $meeting->id) }}" method="POST" class="space-y-6">
                     @csrf
                     @if($submission) @method('PUT') @endif
                     <div>
-                        <label class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2.5">Link G-Drive Baru</label>
-                        <input type="url" name="submission_link" id="input_link" required 
-                               value="{{ $isRevision ? '' : ($submission->submission_link ?? '') }}"
-                               oninput="handleLivePreview()"
-                               class="block w-full rounded-2xl border-gray-100 text-sm font-bold p-4 bg-gray-50 text-indigo-600">
+                        <label class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2.5">Link G-Drive Terkini</label>
+                        
+                        {{-- Wrapper Flex untuk Input dan Tombol Buka Link --}}
+                        <div class="flex gap-2">
+                            <input type="url" name="submission_link" id="input_link" required 
+                                   value="{{ $isRevision ? '' : ($submission->submission_link ?? '') }}"
+                                   oninput="handleLivePreview()"
+                                   {{-- Class dinamis jika terkunci --}}
+                                   class="block w-full rounded-2xl text-sm font-bold p-4 transition-all {{ $isLocked ? 'bg-gray-100 border-gray-200 text-gray-500 cursor-not-allowed focus:ring-0 outline-none' : 'bg-gray-50 border-gray-100 text-indigo-600 focus:ring-4 focus:ring-indigo-50 focus:border-indigo-600' }}"
+                                   {{ $isLocked ? 'readonly tabindex="-1"' : '' }}>
+                            
+                            {{-- Tombol Buka Link Tab Baru --}}
+                            <button type="button" onclick="openCurrentLink()" 
+                                    class="w-14 flex-shrink-0 bg-slate-800 text-white rounded-2xl flex items-center justify-center hover:bg-slate-900 transition-colors shadow-sm active:scale-95" 
+                                    title="Buka Link di Tab Baru">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                            </button>
+                        </div>
+
+                        @if($isLocked)
+                            <p class="text-[8px] font-black text-gray-400 mt-2 uppercase tracking-widest">* Kolom ini tidak dapat diubah lagi.</p>
+                        @endif
                     </div>
-                    <button type="submit" class="w-full py-5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl {{ $isRevision ? 'bg-red-600' : 'bg-indigo-600' }} text-white">
-                        Simpan Perubahan
-                    </button>
+                    
+                    {{-- Sembunyikan tombol Simpan Perubahan jika Terkunci --}}
+                    @if(!$isLocked)
+                        <button type="submit" class="w-full py-5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl {{ $isRevision ? 'bg-red-600 shadow-red-100' : 'bg-indigo-600 shadow-indigo-100' }} text-white hover:opacity-90 active:scale-95 transition-all">
+                            {{ $submission ? 'Simpan Perubahan' : 'Kumpul Tugas' }}
+                        </button>
+                    @endif
                 </form>
             </div>
 
@@ -95,6 +167,16 @@
         const inputLink = document.getElementById('input_link');
         const previewPanel = document.getElementById('preview_panel');
         const previewWrapper = document.getElementById('preview_wrapper');
+
+        // Fungsi untuk membuka link di tab baru
+        function openCurrentLink() {
+            const link = inputLink.value;
+            if (link && link.trim() !== '') {
+                window.open(link, '_blank');
+            } else {
+                alert('Link G-Drive masih kosong!');
+            }
+        }
 
         function extractId(url) {
             if (!url) return null;
