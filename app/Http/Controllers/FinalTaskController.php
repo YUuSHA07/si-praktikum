@@ -231,4 +231,20 @@ class FinalTaskController extends Controller
             'reviewed_by'   => Auth::id(),
         ]);
     }
+
+    /**
+ * Update hanya deskripsi tugas final.
+ */
+    public function updateDescription(Request $request, \App\Models\FinalTask $finalTask)
+    {
+        $request->validate([
+            'description' => 'required|string',
+        ]);
+
+        $finalTask->update([
+            'description' => $request->description,
+        ]);
+
+        return back()->with('success', 'Deskripsi laporan final berhasil diperbarui!');
+    }
 }

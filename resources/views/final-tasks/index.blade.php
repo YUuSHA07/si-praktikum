@@ -4,7 +4,7 @@
     <div class="max-w-[95rem] mx-auto py-8 px-4">
         
         {{-- TOP NAVIGATION & HEADER --}}
-        <div class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div class="mb-8 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
             <div>
                 <a href="{{ route('courses.show', $finalTask->course_id) }}" 
                    class="inline-flex items-center text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] hover:text-indigo-600 transition group mb-3">
@@ -13,29 +13,47 @@
                     </svg>
                     Kembali ke Dashboard Course
                 </a>
-                <h2 class="text-3xl font-black text-gray-800 tracking-tight uppercase">Kelola Laprak Final</h2>
-                <p class="text-[11px] font-bold text-gray-400 mt-1 uppercase tracking-widest">{{ $finalTask->course->course_name ?? $finalTask->course->name }}</p>
+                <div class="flex items-center gap-4">
+                    <h2 class="text-3xl font-black text-gray-800 tracking-tight uppercase leading-none">Kelola Laprak Final</h2>
+                    
+                    {{-- TOMBOL EDIT DESKRIPSI FINAL TASK --}}
+                    @if(in_array(strtoupper(auth()->user()->role), ['ASLAB', 'LABORAN', 'DOSEN']))
+                    <button onclick="openEditFinalModal()" class="p-2 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-all shadow-sm border border-indigo-100" title="Edit Deskripsi Tugas Final">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-4m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    </button>
+                    @endif
+                </div>
+                <p class="text-[11px] font-bold text-gray-400 mt-2 uppercase tracking-widest">{{ $finalTask->course->course_name ?? $finalTask->course->name }}</p>
             </div>
             
-            {{-- PANEL PENGATURAN DEADLINE --}}
+            {{-- PANEL PENGATURAN DEADLINE (Tetap di Kanan) --}}
             @if(in_array(strtoupper(auth()->user()->role), ['ASLAB', 'LABORAN', 'DOSEN']))
-            <div class="w-full md:w-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+            <div class="w-full lg:w-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex-shrink-0">
                 <form action="{{ route('final-tasks.update-deadline', $finalTask->id) }}" method="POST" class="flex flex-col sm:flex-row items-end gap-3">
                     @csrf
                     @method('PUT')
-                    <div>
-                        <label class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Batas Waktu</label>
+                    <div class="w-full sm:w-auto">
+                        <label class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Batas Waktu</label>
                         <input type="datetime-local" name="deadline" 
                                value="{{ $finalTask->deadline ? date('Y-m-d\TH:i', strtotime($finalTask->deadline)) : '' }}" 
-                               class="rounded-xl border-gray-200 focus:ring-indigo-600 focus:border-indigo-600 text-xs font-bold text-gray-600" required>
+                               class="w-full rounded-xl border-gray-200 focus:ring-indigo-600 focus:border-indigo-600 text-xs font-bold text-gray-600 bg-gray-50/50" required>
                     </div>
-                    <button type="submit" class="px-5 py-2.5 bg-slate-900 text-white text-[10px] font-black rounded-xl uppercase tracking-widest hover:bg-slate-800 transition active:scale-95">
+                    <button type="submit" class="w-full sm:w-auto px-5 py-2.5 bg-slate-900 text-white text-[10px] font-black rounded-xl uppercase tracking-widest hover:bg-slate-800 transition active:scale-95 shadow-lg shadow-slate-100">
                         Simpan
                     </button>
                 </form>
             </div>
             @endif
         </div>
+
+        {{-- BARIS 2: DESKRIPSI (LEBAR PENUH SAMPAI UJUNG) --}}
+        @if($finalTask->description)
+        <div class="mb-8 w-full bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-2 h-full bg-indigo-500"></div>
+            <span class="block text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-3 ml-2">Deskripsi / Instruksi Tugas Final:</span>
+            <p class="text-sm text-gray-600 leading-relaxed italic ml-2">"{{ $finalTask->description }}"</p>
+        </div>
+        @endif
 
         {{-- STATS OVERVIEW --}}
         @php
@@ -89,18 +107,13 @@
                     <thead class="bg-white text-[10px] uppercase font-black text-gray-400 border-b border-gray-100">
                         <tr>
                             <th class="px-8 py-4 tracking-widest whitespace-nowrap">Mahasiswa</th>
-                            
-                            {{-- SORTING WAKTU KUMPUL --}}
-                            <th class="px-8 py-4 tracking-widest text-center whitespace-nowrap cursor-pointer hover:bg-gray-50 transition group select-none" onclick="toggleSort()" title="Klik untuk mengurutkan">
+                            <th class="px-8 py-4 tracking-widest text-center whitespace-nowrap cursor-pointer hover:bg-gray-50 transition group select-none" onclick="toggleSort()">
                                 <div class="flex items-center justify-center gap-1">
                                     Waktu Kumpul
                                     <svg id="sortIcon" class="w-3 h-3 text-gray-300 group-hover:text-indigo-500 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>
                                 </div>
                             </th>
-                            
                             <th class="px-8 py-4 tracking-widest text-center whitespace-nowrap">Riwayat</th>
-                            
-                            {{-- FILTER STATUS ASLAB --}}
                             <th class="px-4 py-4 tracking-widest text-center whitespace-nowrap">
                                 <div class="flex flex-col items-center gap-2">
                                     <span>Status Aslab</span>
@@ -112,8 +125,6 @@
                                     </select>
                                 </div>
                             </th>
-                            
-                            {{-- FILTER STATUS LABORAN --}}
                             <th class="px-4 py-4 tracking-widest text-center whitespace-nowrap">
                                 <div class="flex flex-col items-center gap-2">
                                     <span>Status Laboran</span>
@@ -125,8 +136,6 @@
                                     </select>
                                 </div>
                             </th>
-
-                            {{-- FILTER STATUS DOSEN --}}
                             <th class="px-4 py-4 tracking-widest text-center whitespace-nowrap">
                                 <div class="flex flex-col items-center gap-2">
                                     <span>Status Dosen</span>
@@ -138,7 +147,6 @@
                                     </select>
                                 </div>
                             </th>
-                            
                             <th class="px-8 py-6 tracking-widest text-center uppercase whitespace-nowrap">Aksi</th>
                         </tr>
                     </thead>
@@ -146,15 +154,12 @@
                         @foreach($finalTask->course->students as $student)
                             @php 
                                 $sub = $submissions[$student->id] ?? null; 
-                                // Setup Data Attribute Values for JS Filtering
                                 $subStatus = $sub ? 'true' : 'false';
                                 $aslabStat = $sub ? strtoupper($sub->aslab_status) : 'NONE';
                                 $laboranStat = $sub ? strtoupper($sub->laboran_status) : 'NONE';
                                 $dosenStat = $sub ? strtoupper($sub->dosen_status) : 'NONE';
                                 $timestamp = $sub ? \Carbon\Carbon::parse($sub->last_upload_at)->timestamp : 0;
                             @endphp
-                            
-                            {{-- TR DIINJEKSI DATA ATTRIBUTES --}}
                             <tr class="hover:bg-gray-50/50 transition-all group table-row-item" 
                                 data-name="{{ strtolower($student->name) }}" 
                                 data-nim="{{ strtolower($student->id) }}"
@@ -179,8 +184,6 @@
                                         </div>
                                     </div>
                                 </td>
-                                
-                                {{-- Waktu Kumpul --}}
                                 <td class="px-8 py-5 text-center whitespace-nowrap">
                                     @if($sub)
                                         <div class="inline-flex flex-col text-[11px] font-black leading-tight text-center">
@@ -191,8 +194,6 @@
                                         <span class="text-[10px] text-gray-300 font-black uppercase tracking-widest italic">Belum Mengumpul</span>
                                     @endif
                                 </td>
-
-                                {{-- Riwayat --}}
                                 <td class="px-8 py-5 text-center whitespace-nowrap">
                                     @if($sub && $sub->histories->count() > 0)
                                         <span class="inline-block whitespace-nowrap px-3 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-black shadow-sm border border-indigo-100">
@@ -202,78 +203,49 @@
                                         <span class="text-gray-200">—</span>
                                     @endif
                                 </td>
-                                
-                                {{-- Status Aslab --}}
+
+                                {{-- STATUS ASLAB + TANGGAL --}}
                                 <td class="px-4 py-5 text-center whitespace-nowrap">
                                     @if($sub)
-                                        @php
-                                            $colorAslab = match($aslabStat) {
-                                                'ACC'    => 'bg-emerald-50 text-emerald-600 border-emerald-100',
-                                                'REVISI' => 'bg-red-50 text-red-600 border-red-100',
-                                                default  => 'bg-amber-50 text-amber-600 border-amber-100',
-                                            };
-                                        @endphp
                                         <div class="flex flex-col items-center gap-1.5">
-                                            <span class="whitespace-nowrap px-3 py-1.5 {{ $colorAslab }} rounded-xl text-[9px] font-black uppercase border shadow-sm">{{ $aslabStat }}</span>
+                                            <span class="whitespace-nowrap px-3 py-1.5 rounded-xl text-[9px] font-black uppercase border shadow-sm {{ $aslabStat == 'ACC' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : ($aslabStat == 'REVISI' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-amber-50 text-amber-600 border-amber-100') }}">{{ $aslabStat }}</span>
                                             @if($aslabStat === 'ACC' && $sub->aslab_acc_at)
-                                                <span class="whitespace-nowrap text-[8px] font-bold text-gray-400 uppercase tracking-widest">{{ \Carbon\Carbon::parse($sub->aslab_acc_at)->format('d/m/Y') }}</span>
+                                                <span class="text-[8px] font-bold text-gray-400 uppercase tracking-widest">{{ \Carbon\Carbon::parse($sub->aslab_acc_at)->format('d/m/Y') }}</span>
                                             @endif
                                         </div>
                                     @endif
                                 </td>
 
-                                {{-- Status Laboran --}}
+                                {{-- STATUS LABORAN + TANGGAL --}}
                                 <td class="px-4 py-5 text-center whitespace-nowrap">
                                     @if($sub)
-                                        @php
-                                            $colorLab = match($laboranStat) {
-                                                'ACC'    => 'bg-blue-50 text-blue-600 border-blue-100',
-                                                'REVISI' => 'bg-orange-50 text-orange-600 border-orange-100',
-                                                default  => 'bg-slate-50 text-slate-400 border-slate-100',
-                                            };
-                                        @endphp
                                         <div class="flex flex-col items-center gap-1.5">
-                                            <span class="whitespace-nowrap px-3 py-1.5 {{ $colorLab }} rounded-xl text-[9px] font-black uppercase border shadow-sm">{{ $laboranStat }}</span>
+                                            <span class="whitespace-nowrap px-3 py-1.5 rounded-xl text-[9px] font-black uppercase border shadow-sm {{ $laboranStat == 'ACC' ? 'bg-blue-50 text-blue-600 border-blue-100' : ($laboranStat == 'REVISI' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-slate-50 text-slate-400 border-slate-100') }}">{{ $laboranStat }}</span>
                                             @if($laboranStat === 'ACC' && $sub->laboran_acc_at)
-                                                <span class="whitespace-nowrap text-[8px] font-bold text-gray-400 uppercase tracking-widest">{{ \Carbon\Carbon::parse($sub->laboran_acc_at)->format('d/m/Y') }}</span>
+                                                <span class="text-[8px] font-bold text-gray-400 uppercase tracking-widest">{{ \Carbon\Carbon::parse($sub->laboran_acc_at)->format('d/m/Y') }}</span>
                                             @endif
                                         </div>
                                     @endif
                                 </td>
 
-                                {{-- Status Dosen --}}
+                                {{-- STATUS DOSEN + TANGGAL --}}
                                 <td class="px-4 py-5 text-center whitespace-nowrap">
                                     @if($sub)
-                                        @php
-                                            $colorDosen = match($dosenStat) {
-                                                'ACC'    => 'bg-purple-50 text-purple-600 border-purple-100',
-                                                'REVISI' => 'bg-pink-50 text-pink-600 border-pink-100',
-                                                default  => 'bg-slate-50 text-slate-400 border-slate-100',
-                                            };
-                                        @endphp
                                         <div class="flex flex-col items-center gap-1.5">
-                                            <span class="whitespace-nowrap px-3 py-1.5 {{ $colorDosen }} rounded-xl text-[9px] font-black uppercase border shadow-sm">{{ $dosenStat }}</span>
+                                            <span class="whitespace-nowrap px-3 py-1.5 rounded-xl text-[9px] font-black uppercase border shadow-sm {{ $dosenStat == 'ACC' ? 'bg-purple-50 text-purple-600 border-purple-100' : ($dosenStat == 'REVISI' ? 'bg-pink-50 text-pink-600 border-pink-100' : 'bg-slate-50 text-slate-400 border-slate-100') }}">{{ $dosenStat }}</span>
                                             @if($dosenStat === 'ACC' && $sub->dosen_acc_at)
-                                                <span class="whitespace-nowrap text-[8px] font-bold text-gray-400 uppercase tracking-widest">{{ \Carbon\Carbon::parse($sub->dosen_acc_at)->format('d/m/Y') }}</span>
+                                                <span class="text-[8px] font-bold text-gray-400 uppercase tracking-widest">{{ \Carbon\Carbon::parse($sub->dosen_acc_at)->format('d/m/Y') }}</span>
                                             @endif
                                         </div>
                                     @endif
                                 </td>
 
-                                {{-- AKSI --}}
                                 <td class="px-8 py-5 text-center whitespace-nowrap">
                                     @if($sub)
                                         @if(strtoupper(auth()->user()->role) === 'DOSEN')
-                                            <a href="{{ $sub->submission_link }}" 
-                                               target="_blank"
-                                               class="whitespace-nowrap inline-block bg-emerald-600 text-white px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase hover:bg-emerald-700 shadow-xl shadow-emerald-100 active:scale-95 transition-all tracking-widest">
-                                                Lihat File
-                                            </a>
+                                            <a href="{{ $sub->submission_link }}" target="_blank" class="whitespace-nowrap inline-block bg-emerald-600 text-white px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase hover:bg-emerald-700 shadow-xl active:scale-95 transition-all tracking-widest">Lihat File</a>
                                         @else
-                                            <a href="{{ route('final-tasks.handler', $sub->id) }}" 
-                                               class="whitespace-nowrap inline-block bg-indigo-600 text-white px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase hover:bg-indigo-700 shadow-xl shadow-indigo-100 active:scale-95 transition-all tracking-widest">
-                                                Review File
-                                            </a>
+                                            <a href="{{ route('final-tasks.handler', $sub->id) }}" class="whitespace-nowrap inline-block bg-indigo-600 text-white px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase hover:bg-indigo-700 shadow-xl active:scale-95 transition-all tracking-widest">Review File</a>
                                         @endif
                                     @else
                                         <span class="whitespace-nowrap text-gray-300 text-[10px] font-black italic tracking-widest opacity-50 block text-center">N/A</span>
@@ -283,37 +255,67 @@
                         @endforeach
                     </tbody>
                 </table>
-
-                {{-- Empty State (Hidden by default, shown via JS if no results) --}}
                 <div id="emptyState" class="hidden p-16 text-center">
-                    <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pencarian / Filter tidak menemukan hasil</p>
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- SCRIPT JAVASCRIPT UNTUK FILTER & SORTING --}}
+    {{-- MODAL EDIT DESKRIPSI FINAL TASK (BARU - Tanpa Edit Link) --}}
+    @if(in_array(strtoupper(auth()->user()->role), ['ASLAB', 'LABORAN', 'DOSEN']))
+    <div id="modalEditFinalTask" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in duration-300">
+            <form action="{{ route('final-tasks.update-description', $finalTask->id) }}" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="p-10 border-b border-gray-50 bg-gray-50/50">
+                    <h3 class="text-2xl font-black text-gray-800 leading-tight tracking-tight uppercase">Edit Deskripsi Final Task</h3>
+                </div>
+                <div class="p-10 space-y-6">
+                    <div>
+                        <label class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2.5">Deskripsi / Instruksi Tugas</label>
+                        <textarea name="description" rows="6" class="block w-full rounded-2xl border-gray-100 text-sm font-bold focus:ring-4 focus:ring-indigo-50 p-4 bg-gray-50 transition resize-none" placeholder="Tuliskan instruksi materi...">{{ $finalTask->description }}</textarea>
+                    </div>
+                </div>
+                <div class="p-10 pt-0 flex flex-col gap-4">
+                    <button type="submit" class="w-full bg-indigo-600 text-white py-5 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition">Update Deskripsi</button>
+                    <button type="button" onclick="closeEditFinalModal()" class="w-full text-[9px] font-black text-gray-400 uppercase tracking-widest hover:text-red-500 transition">Batalkan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    @endif
+
     <script>
+        {{-- FUNGSI MODAL (BARU) --}}
+        function openEditFinalModal() {
+            document.getElementById('modalEditFinalTask').classList.replace('hidden', 'flex');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeEditFinalModal() {
+            document.getElementById('modalEditFinalTask').classList.replace('flex', 'hidden');
+            document.body.style.overflow = 'auto';
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('searchInput');
             const unsubmittedFilter = document.getElementById('unsubmittedFilter');
             const aslabFilter = document.getElementById('aslabFilter');
             const laboranFilter = document.getElementById('laboranFilter');
-            const dosenFilter = document.getElementById('dosenFilter'); // Tambahan Dosen Filter
+            const dosenFilter = document.getElementById('dosenFilter');
             const tableBody = document.getElementById('tableBody');
             const rows = Array.from(document.querySelectorAll('.table-row-item'));
             const emptyState = document.getElementById('emptyState');
             
-            let sortDesc = true; // Default Sort State
+            let sortDesc = true; 
 
-            // 1. FUNGSI FILTER UTAMA
             function applyFilters() {
                 const query = searchInput.value.toLowerCase();
                 const onlyUnsubmitted = unsubmittedFilter.checked;
                 const aslab = aslabFilter.value;
                 const laboran = laboranFilter.value;
-                const dosen = dosenFilter.value; // Ambil value filter dosen
+                const dosen = dosenFilter.value;
                 
                 let visibleCount = 0;
 
@@ -323,14 +325,13 @@
                     const submitted = row.getAttribute('data-submitted') === 'true';
                     const aslabStat = row.getAttribute('data-aslab');
                     const laboranStat = row.getAttribute('data-laboran');
-                    const dosenStat = row.getAttribute('data-dosen'); // Ambil atribut dosen
+                    const dosenStat = row.getAttribute('data-dosen');
 
-                    // Check Logic
                     const matchSearch = name.includes(query) || nim.includes(query);
                     const matchUnsubmitted = !onlyUnsubmitted || (onlyUnsubmitted && !submitted);
                     const matchAslab = aslab === "" || aslabStat === aslab;
                     const matchLaboran = laboran === "" || laboranStat === laboran;
-                    const matchDosen = dosen === "" || dosenStat === dosen; // Cek dosen
+                    const matchDosen = dosen === "" || dosenStat === dosen;
 
                     if (matchSearch && matchUnsubmitted && matchAslab && matchLaboran && matchDosen) {
                         row.style.display = '';
@@ -339,51 +340,36 @@
                         row.style.display = 'none';
                     }
                 });
-
-                // Show or Hide Empty State
                 emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
             }
 
-            // 2. FUNGSI SORTING
             window.toggleSort = function() {
                 sortDesc = !sortDesc;
                 const icon = document.getElementById('sortIcon');
-                
-                // Animasi Panah
-                if(sortDesc) {
-                    icon.style.transform = 'rotate(0deg)'; // Terbaru Atas
-                } else {
-                    icon.style.transform = 'rotate(180deg)'; // Terlama Atas
-                }
+                icon.style.transform = sortDesc ? 'rotate(0deg)' : 'rotate(180deg)';
 
-                // Sort Array Node
                 const sortedRows = rows.sort((a, b) => {
                     const timeA = parseInt(a.getAttribute('data-time'));
                     const timeB = parseInt(b.getAttribute('data-time'));
                     return sortDesc ? timeB - timeA : timeA - timeB;
                 });
 
-                // Render ulang baris ke dalam tbody
                 tableBody.innerHTML = '';
                 sortedRows.forEach(row => tableBody.appendChild(row));
             };
 
-            // 3. EVENT LISTENERS
             searchInput.addEventListener('input', applyFilters);
-            
-            // Saat checkbox diklik, reset filter status
             unsubmittedFilter.addEventListener('change', function() {
                 if (this.checked) {
                     aslabFilter.value = "";
                     laboranFilter.value = "";
-                    dosenFilter.value = ""; // Reset dosen juga
+                    dosenFilter.value = "";
                 }
                 applyFilters();
             });
-
             aslabFilter.addEventListener('change', applyFilters);
             laboranFilter.addEventListener('change', applyFilters);
-            dosenFilter.addEventListener('change', applyFilters); // Listener dosen
+            dosenFilter.addEventListener('change', applyFilters);
         });
     </script>
 </x-app-layout>

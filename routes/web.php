@@ -125,6 +125,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Route untuk Update Link/Revisi (Baris 130 di Blade)
     Route::put('/meetings/{meeting}', [App\Http\Controllers\MeetingController::class, 'update'])->name('meetings.update');
+
+    // Route untuk Update Deskripsi (Baris 11 di Blade)
+    Route::put('/final-tasks/{finalTask}/update-description', [App\Http\Controllers\FinalTaskController::class, 'updateDescription'])->name('final-tasks.update-description');
 });
 
 require __DIR__.'/auth.php';
