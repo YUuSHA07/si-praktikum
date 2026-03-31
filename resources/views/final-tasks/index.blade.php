@@ -18,6 +18,7 @@
             </div>
             
             {{-- PANEL PENGATURAN DEADLINE --}}
+            @if(in_array(strtoupper(auth()->user()->role), ['ASLAB', 'LABORAN', 'DOSEN']))
             <div class="w-full md:w-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
                 <form action="{{ route('final-tasks.update-deadline', $finalTask->id) }}" method="POST" class="flex flex-col sm:flex-row items-end gap-3">
                     @csrf
@@ -33,6 +34,7 @@
                     </button>
                 </form>
             </div>
+            @endif
         </div>
 
         {{-- STATS OVERVIEW --}}
@@ -75,7 +77,7 @@
                             <th class="px-4 py-6 tracking-widest text-center whitespace-nowrap">Status Aslab</th>
                             <th class="px-4 py-6 tracking-widest text-center whitespace-nowrap">Status Laboran</th>
                             <th class="px-4 py-6 tracking-widest text-center whitespace-nowrap">Status Dosen</th>
-                            {{-- Ubah text-right menjadi text-center --}}
+                            {{-- DIUBAH: text-center untuk Header AKSI --}}
                             <th class="px-8 py-6 tracking-widest text-center uppercase whitespace-nowrap">Aksi</th>
                         </tr>
                     </thead>
@@ -183,7 +185,7 @@
                                 </td>
 
                                 {{-- AKSI --}}
-                                {{-- Ubah text-right menjadi text-center --}}
+                                {{-- DIUBAH: text-center untuk isi kolom AKSI --}}
                                 <td class="px-8 py-5 text-center whitespace-nowrap">
                                     @if($sub)
                                         @if(strtoupper(auth()->user()->role) === 'DOSEN')
@@ -199,6 +201,7 @@
                                             </a>
                                         @endif
                                     @else
+                                        {{-- DIUBAH: Tambah block dan text-center agar tulisan N/A rapi di tengah --}}
                                         <span class="whitespace-nowrap text-gray-300 text-[10px] font-black italic tracking-widest opacity-50 block text-center">N/A</span>
                                     @endif
                                 </td>

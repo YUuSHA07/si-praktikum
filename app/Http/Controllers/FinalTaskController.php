@@ -205,11 +205,19 @@ class FinalTaskController extends Controller
         return view('mahasiswa.final-tasks.handler', compact('finalTask', 'submission', 'histories'));
     }
 
+    /**
+     * UPDATE DEADLINE
+     * PERBAIKAN: Menghapus "after:now" agar deadline bebas diset ke kapan pun
+     */
     public function updateDeadline(Request $request, $id)
     {
-        $request->validate(['deadline' => 'required|date|after:now']);
+        $request->validate([
+            'deadline' => 'required|date' 
+        ]);
+        
         $finalTask = FinalTask::findOrFail($id);
         $finalTask->update(['deadline' => $request->deadline]);
+        
         return redirect()->back()->with('success', 'Deadline diperbarui!');
     }
 
