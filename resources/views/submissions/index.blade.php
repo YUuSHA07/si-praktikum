@@ -61,24 +61,90 @@
             </div>
         </div>
 
-        {{-- TABEL UTAMA --}}
-        <div class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+        {{-- TABEL UTAMA DENGAN FILTER --}}
+        <div class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+            
+            {{-- BAR FILTER PENCARIAN & CHECKBOX --}}
+            <div class="p-6 border-b border-gray-50 flex flex-col sm:flex-row justify-between gap-4 items-center bg-gray-50/30">
+                <div class="w-full sm:w-1/3 relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+                    <input type="text" id="searchInput" placeholder="Cari Nama atau NIM..." class="block w-full pl-10 pr-4 py-3 rounded-2xl border-gray-200 text-xs font-bold focus:ring-indigo-50 focus:border-indigo-600 text-gray-600 transition">
+                </div>
+                <div>
+                    <label class="flex items-center gap-2 cursor-pointer text-[10px] font-black text-gray-500 uppercase tracking-widest hover:text-indigo-600 transition select-none">
+                        <input type="checkbox" id="unsubmittedFilter" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-gray-300 cursor-pointer">
+                        Hanya Tampilkan Yang Belum Kumpul
+                    </label>
+                </div>
+            </div>
+
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-gray-50/50 text-[10px] uppercase font-black text-gray-400 border-b border-gray-100">
+                <table class="w-full text-left border-collapse" id="submissionsTable">
+                    <thead class="bg-white text-[10px] uppercase font-black text-gray-400 border-b border-gray-100">
                         <tr>
-                            <th class="px-8 py-6 tracking-widest whitespace-nowrap">Mahasiswa</th>
-                            <th class="px-8 py-6 tracking-widest text-center whitespace-nowrap">Waktu Kumpul</th>
-                            <th class="px-8 py-6 tracking-widest text-center whitespace-nowrap">Riwayat</th>
-                            <th class="px-4 py-6 tracking-widest text-center whitespace-nowrap">Status Aslab</th>
-                            <th class="px-4 py-6 tracking-widest text-center whitespace-nowrap">Status Laboran</th>
-                            <th class="px-8 py-6 tracking-widest text-center uppercase whitespace-nowrap">Aksi</th>
+                            <th class="px-8 py-4 tracking-widest whitespace-nowrap">Mahasiswa</th>
+                            
+                            {{-- SORTING WAKTU KUMPUL --}}
+                            <th class="px-8 py-4 tracking-widest text-center whitespace-nowrap cursor-pointer hover:bg-gray-50 transition group select-none" onclick="toggleSort()" title="Klik untuk mengurutkan">
+                                <div class="flex items-center justify-center gap-1">
+                                    Waktu Kumpul
+                                    <svg id="sortIcon" class="w-3 h-3 text-gray-300 group-hover:text-indigo-500 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>
+                                </div>
+                            </th>
+                            
+                            <th class="px-8 py-4 tracking-widest text-center whitespace-nowrap">Riwayat</th>
+                            
+                            {{-- FILTER STATUS ASLAB --}}
+                            <th class="px-4 py-4 tracking-widest text-center whitespace-nowrap">
+                                <div class="flex flex-col items-center gap-2">
+                                    <span>Status Aslab</span>
+                                    <select id="aslabFilter" class="text-[9px] font-bold rounded-lg border-gray-200 py-1 pl-2 pr-6 bg-gray-50 focus:ring-0 text-gray-500 cursor-pointer">
+                                        <option value="">Semua Filter</option>
+                                        <option value="PENDING">PENDING</option>
+                                        <option value="REVISI">REVISI</option>
+                                        <option value="ACC">ACC</option>
+                                    </select>
+                                </div>
+                            </th>
+                            
+                            {{-- FILTER STATUS LABORAN --}}
+                            <th class="px-4 py-4 tracking-widest text-center whitespace-nowrap">
+                                <div class="flex flex-col items-center gap-2">
+                                    <span>Status Laboran</span>
+                                    <select id="laboranFilter" class="text-[9px] font-bold rounded-lg border-gray-200 py-1 pl-2 pr-6 bg-gray-50 focus:ring-0 text-gray-500 cursor-pointer">
+                                        <option value="">Semua Filter</option>
+                                        <option value="PENDING">PENDING</option>
+                                        <option value="REVISI">REVISI</option>
+                                        <option value="ACC">ACC</option>
+                                    </select>
+                                </div>
+                            </th>
+                            
+                            <th class="px-8 py-4 tracking-widest text-center uppercase whitespace-nowrap">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-50">
+                    <tbody class="divide-y divide-gray-50" id="tableBody">
                         @foreach($meeting->course->students as $student)
-                            @php $sub = $submissions[$student->id] ?? null; @endphp
-                            <tr class="hover:bg-gray-50/50 transition-all group">
+                            @php 
+                                $sub = $submissions[$student->id] ?? null; 
+                                // Setup Data Attribute Values for JS Filtering
+                                $subStatus = $sub ? 'true' : 'false';
+                                $aslabStat = $sub ? strtoupper($sub->aslab_status) : 'NONE';
+                                $laboranStat = $sub ? strtoupper($sub->laboran_status) : 'NONE';
+                                $timestamp = $sub ? \Carbon\Carbon::parse($sub->last_upload_at)->timestamp : 0;
+                            @endphp
+                            
+                            {{-- TR DIINJEKSI DATA ATTRIBUTES --}}
+                            <tr class="hover:bg-gray-50/50 transition-all group table-row-item" 
+                                data-name="{{ strtolower($student->name) }}" 
+                                data-nim="{{ strtolower($student->id) }}"
+                                data-submitted="{{ $subStatus }}"
+                                data-aslab="{{ $aslabStat }}"
+                                data-laboran="{{ $laboranStat }}"
+                                data-time="{{ $timestamp }}">
+                                
                                 <td class="px-8 py-5 whitespace-nowrap">
                                     <div class="flex items-center gap-4">
                                         <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center overflow-hidden shadow-inner border border-gray-50">
@@ -122,16 +188,15 @@
                                 <td class="px-4 py-5 text-center whitespace-nowrap">
                                     @if($sub)
                                         @php
-                                            $sAslab = strtoupper($sub->aslab_status ?? 'PENDING');
-                                            $colorAslab = match($sAslab) {
+                                            $colorAslab = match($aslabStat) {
                                                 'ACC'    => 'bg-emerald-50 text-emerald-600 border-emerald-100',
                                                 'REVISI' => 'bg-red-50 text-red-600 border-red-100',
                                                 default  => 'bg-amber-50 text-amber-600 border-amber-100',
                                             };
                                         @endphp
                                         <div class="flex flex-col items-center gap-1.5">
-                                            <span class="whitespace-nowrap px-3 py-1.5 {{ $colorAslab }} rounded-xl text-[9px] font-black uppercase border shadow-sm">{{ $sAslab }}</span>
-                                            @if($sAslab === 'ACC' && $sub->aslab_acc_at)
+                                            <span class="whitespace-nowrap px-3 py-1.5 {{ $colorAslab }} rounded-xl text-[9px] font-black uppercase border shadow-sm">{{ $aslabStat }}</span>
+                                            @if($aslabStat === 'ACC' && $sub->aslab_acc_at)
                                                 <span class="whitespace-nowrap text-[8px] font-bold text-gray-400 uppercase tracking-widest">{{ \Carbon\Carbon::parse($sub->aslab_acc_at)->format('d/m/Y') }}</span>
                                             @endif
                                         </div>
@@ -142,16 +207,15 @@
                                 <td class="px-4 py-5 text-center whitespace-nowrap">
                                     @if($sub)
                                         @php
-                                            $sLab = strtoupper($sub->laboran_status ?? 'PENDING');
-                                            $colorLab = match($sLab) {
+                                            $colorLab = match($laboranStat) {
                                                 'ACC'    => 'bg-blue-50 text-blue-600 border-blue-100',
                                                 'REVISI' => 'bg-orange-50 text-orange-600 border-orange-100',
                                                 default  => 'bg-slate-50 text-slate-400 border-slate-100',
                                             };
                                         @endphp
                                         <div class="flex flex-col items-center gap-1.5">
-                                            <span class="whitespace-nowrap px-3 py-1.5 {{ $colorLab }} rounded-xl text-[9px] font-black uppercase border shadow-sm">{{ $sLab }}</span>
-                                            @if($sLab === 'ACC' && $sub->laboran_acc_at)
+                                            <span class="whitespace-nowrap px-3 py-1.5 {{ $colorLab }} rounded-xl text-[9px] font-black uppercase border shadow-sm">{{ $laboranStat }}</span>
+                                            @if($laboranStat === 'ACC' && $sub->laboran_acc_at)
                                                 <span class="whitespace-nowrap text-[8px] font-bold text-gray-400 uppercase tracking-widest">{{ \Carbon\Carbon::parse($sub->laboran_acc_at)->format('d/m/Y') }}</span>
                                             @endif
                                         </div>
@@ -162,14 +226,11 @@
                                 <td class="px-8 py-5 text-center whitespace-nowrap">
                                     @if($sub)
                                         @if(strtoupper(auth()->user()->role) === 'DOSEN')
-                                            <a href="{{ $sub->submission_link }}" 
-                                               target="_blank"
-                                               class="whitespace-nowrap inline-block bg-emerald-600 text-white px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase hover:bg-emerald-700 shadow-xl shadow-emerald-100 active:scale-95 transition-all tracking-widest">
+                                            <a href="{{ $sub->submission_link }}" target="_blank" class="whitespace-nowrap inline-block bg-emerald-600 text-white px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase hover:bg-emerald-700 shadow-xl shadow-emerald-100 active:scale-95 transition-all tracking-widest">
                                                 Lihat File
                                             </a>
                                         @else
-                                            <a href="{{ route('submissions.handler', $sub->id) }}" 
-                                               class="whitespace-nowrap inline-block bg-indigo-600 text-white px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase hover:bg-indigo-700 shadow-xl shadow-indigo-100 active:scale-95 transition-all tracking-widest">
+                                            <a href="{{ route('submissions.handler', $sub->id) }}" class="whitespace-nowrap inline-block bg-indigo-600 text-white px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase hover:bg-indigo-700 shadow-xl shadow-indigo-100 active:scale-95 transition-all tracking-widest">
                                                 Review File
                                             </a>
                                         @endif
@@ -181,7 +242,101 @@
                         @endforeach
                     </tbody>
                 </table>
+
+                {{-- Empty State (Hidden by default, shown via JS if no results) --}}
+                <div id="emptyState" class="hidden p-16 text-center">
+                    <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pencarian / Filter tidak menemukan hasil</p>
+                </div>
             </div>
         </div>
     </div>
+
+    {{-- SCRIPT JAVASCRIPT UNTUK FILTER & SORTING --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            const unsubmittedFilter = document.getElementById('unsubmittedFilter');
+            const aslabFilter = document.getElementById('aslabFilter');
+            const laboranFilter = document.getElementById('laboranFilter');
+            const tableBody = document.getElementById('tableBody');
+            const rows = Array.from(document.querySelectorAll('.table-row-item'));
+            const emptyState = document.getElementById('emptyState');
+            
+            let sortDesc = true; // Default Sort State
+
+            // 1. FUNGSI FILTER UTAMA
+            function applyFilters() {
+                const query = searchInput.value.toLowerCase();
+                const onlyUnsubmitted = unsubmittedFilter.checked;
+                const aslab = aslabFilter.value;
+                const laboran = laboranFilter.value;
+                
+                let visibleCount = 0;
+
+                rows.forEach(row => {
+                    const name = row.getAttribute('data-name');
+                    const nim = row.getAttribute('data-nim');
+                    const submitted = row.getAttribute('data-submitted') === 'true';
+                    const aslabStat = row.getAttribute('data-aslab');
+                    const laboranStat = row.getAttribute('data-laboran');
+
+                    // Check Logic
+                    const matchSearch = name.includes(query) || nim.includes(query);
+                    const matchUnsubmitted = !onlyUnsubmitted || (onlyUnsubmitted && !submitted);
+                    const matchAslab = aslab === "" || aslabStat === aslab;
+                    const matchLaboran = laboran === "" || laboranStat === laboran;
+
+                    if (matchSearch && matchUnsubmitted && matchAslab && matchLaboran) {
+                        row.style.display = '';
+                        visibleCount++;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                // Show or Hide Empty State
+                emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+            }
+
+            // 2. FUNGSI SORTING
+            window.toggleSort = function() {
+                sortDesc = !sortDesc;
+                const icon = document.getElementById('sortIcon');
+                
+                // Animasi Panah
+                if(sortDesc) {
+                    icon.style.transform = 'rotate(0deg)'; // Terbaru Atas
+                } else {
+                    icon.style.transform = 'rotate(180deg)'; // Terlama Atas
+                }
+
+                // Sort Array Node
+                const sortedRows = rows.sort((a, b) => {
+                    const timeA = parseInt(a.getAttribute('data-time'));
+                    const timeB = parseInt(b.getAttribute('data-time'));
+                    return sortDesc ? timeB - timeA : timeA - timeB;
+                });
+
+                // Render ulang baris ke dalam tbody
+                tableBody.innerHTML = '';
+                sortedRows.forEach(row => tableBody.appendChild(row));
+            };
+
+            // 3. EVENT LISTENERS
+            searchInput.addEventListener('input', applyFilters);
+            
+            // Perbaikan: Saat checkbox diklik, reset filter status
+            unsubmittedFilter.addEventListener('change', function() {
+                if (this.checked) {
+                    aslabFilter.value = "";
+                    laboranFilter.value = "";
+                }
+                applyFilters();
+            });
+
+            aslabFilter.addEventListener('change', applyFilters);
+            laboranFilter.addEventListener('change', applyFilters);
+        });
+    </script>
 </x-app-layout>
