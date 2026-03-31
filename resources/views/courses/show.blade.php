@@ -66,6 +66,72 @@
                 @endif
             </div>
         </div>
+
+        {{-- STATUS FINAL TASK DI HERO BANNER --}}
+        @if(strtoupper(auth()->user()->role) === 'MAHASISWA')
+            @php 
+                $finalSub = \App\Models\Submission::where('final_task_id', $course->finalTask->id)
+                                ->where('student_id', auth()->id())
+                                ->where('is_final', true)
+                                ->first(); 
+                $isPastDeadline = $course->finalTask->deadline && now()->gt(\Carbon\Carbon::parse($course->finalTask->deadline));
+                $isCompleted = $finalSub && strtoupper($finalSub->aslab_status) == 'ACC' && strtoupper($finalSub->laboran_status) == 'ACC' && strtoupper($finalSub->dosen_status) == 'ACC';
+            @endphp
+            
+            <div class="mt-6 border-t border-white/10 pt-5 space-y-2.5 relative z-10">
+                @if($finalSub)
+                    {{-- Aslab Status --}}
+                    <div class="flex items-center gap-3 text-[9px] font-black uppercase tracking-tighter">
+                        <span class="text-indigo-300 w-24 text-[8px]">Status Aslab:</span>
+                        <span class="px-2 py-0.5 rounded-md {{ $finalSub->aslab_status == 'ACC' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : ($finalSub->aslab_status == 'REVISI' ? 'bg-red-500/20 text-red-300 border border-red-500/30 animate-pulse' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30') }}">
+                            {{ $finalSub->aslab_status }}
+                        </span>
+                        @if($finalSub->aslab_status == 'ACC' && $finalSub->aslab_acc_at)
+                            <span class="text-indigo-300 text-[8px] border-l border-indigo-400/50 pl-3">{{ \Carbon\Carbon::parse($finalSub->aslab_acc_at)->format('d M Y') }}</span>
+                        @endif
+                    </div>
+                    {{-- Laboran Status --}}
+                    <div class="flex items-center gap-3 text-[9px] font-black uppercase tracking-tighter">
+                        <span class="text-indigo-300 w-24 text-[8px]">Status Laboran:</span>
+                        <span class="px-2 py-0.5 rounded-md {{ $finalSub->laboran_status == 'ACC' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : ($finalSub->laboran_status == 'REVISI' ? 'bg-red-500/20 text-red-300 border border-red-500/30 animate-pulse' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30') }}">
+                            {{ $finalSub->laboran_status }}
+                        </span>
+                        @if($finalSub->laboran_status == 'ACC' && $finalSub->laboran_acc_at)
+                            <span class="text-indigo-300 text-[8px] border-l border-indigo-400/50 pl-3">{{ \Carbon\Carbon::parse($finalSub->laboran_acc_at)->format('d M Y') }}</span>
+                        @endif
+                    </div>
+                    {{-- Dosen Status --}}
+                    <div class="flex items-center gap-3 text-[9px] font-black uppercase tracking-tighter">
+                        <span class="text-indigo-300 w-24 text-[8px]">Status Dosen:</span>
+                        <span class="px-2 py-0.5 rounded-md {{ $finalSub->dosen_status == 'ACC' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : ($finalSub->dosen_status == 'REVISI' ? 'bg-red-500/20 text-red-300 border border-red-500/30 animate-pulse' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30') }}">
+                            {{ $finalSub->dosen_status }}
+                        </span>
+                        @if($finalSub->dosen_status == 'ACC' && $finalSub->dosen_acc_at)
+                            <span class="text-indigo-300 text-[8px] border-l border-indigo-400/50 pl-3">{{ \Carbon\Carbon::parse($finalSub->dosen_acc_at)->format('d M Y') }}</span>
+                        @endif
+                    </div>
+
+                    @if($isPastDeadline && !$isCompleted)
+                        <div class="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-red-500/20 text-red-200 text-[9px] font-black rounded-lg uppercase tracking-widest border border-red-500/30 backdrop-blur-sm">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            Lewat Deadline & Belum ACC Sepenuhnya
+                        </div>
+                    @endif
+                @else
+                    @if($isPastDeadline)
+                        <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-red-500/20 text-red-200 text-[9px] font-black rounded-lg uppercase tracking-widest border border-red-500/30 backdrop-blur-sm">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Waktu Habis (Belum Mengumpulkan)
+                        </div>
+                    @else
+                        <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 text-amber-200 text-[9px] font-black rounded-lg uppercase tracking-widest border border-amber-500/30 backdrop-blur-sm">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Belum Mengumpulkan Laporan Final
+                        </div>
+                    @endif
+                @endif
+            </div>
+        @endif
     </div>
     @endif
 
@@ -144,78 +210,6 @@
                 </div>
 
                 <div class="divide-y divide-gray-50">
-                    {{-- 1. BARIS LAPRAK FINAL DI DALAM DAFTAR (Jika Ada) --}}
-                    @if($course->finalTask)
-                    <div class="p-8 bg-indigo-50/30 hover:bg-indigo-50 transition group border-l-4 border-indigo-600">
-                        <div class="flex flex-col md:flex-row justify-between gap-6">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-3 mb-3">
-                                    <span class="px-3 py-1 bg-indigo-600 text-white text-[9px] font-black rounded-lg uppercase tracking-[0.1em]">TUGAS AKHIR</span>
-                                    <span class="text-[9px] font-black uppercase tracking-widest text-indigo-500 italic">Laporan Praktikum Final</span>
-                                </div>
-                                <h4 class="font-black text-gray-800 text-xl leading-tight group-hover:text-indigo-600 transition">Final Project & Laporan Semester</h4>
-                                
-                                {{-- BLOK BARU: STATUS FINAL TASK (Khusus Mahasiswa) --}}
-                                @if(strtoupper(auth()->user()->role) === 'MAHASISWA')
-                                    @php 
-                                        $finalSub = \App\Models\Submission::where('final_task_id', $course->finalTask->id)
-                                                        ->where('student_id', auth()->id())
-                                                        ->where('is_final', true)
-                                                        ->first(); 
-                                    @endphp
-                                    @if($finalSub)
-                                        <div class="mt-5 space-y-2.5">
-                                            {{-- Aslab Status --}}
-                                            <div class="flex items-center gap-3 text-[9px] font-black uppercase tracking-tighter">
-                                                <span class="text-indigo-400 w-24 text-[8px]">Status Aslab:</span>
-                                                <span class="px-2 py-0.5 rounded-md {{ $finalSub->aslab_status == 'ACC' ? 'bg-emerald-50 text-emerald-600' : ($finalSub->aslab_status == 'REVISI' ? 'bg-red-50 text-red-600 animate-pulse' : 'bg-amber-50 text-amber-600') }}">
-                                                    {{ $finalSub->aslab_status }}
-                                                </span>
-                                                @if($finalSub->aslab_status == 'ACC' && $finalSub->aslab_acc_at)
-                                                    <span class="text-indigo-300 text-[8px] border-l border-indigo-200 pl-3">{{ \Carbon\Carbon::parse($finalSub->aslab_acc_at)->format('d M Y') }}</span>
-                                                @endif
-                                            </div>
-                                            {{-- Laboran Status --}}
-                                            <div class="flex items-center gap-3 text-[9px] font-black uppercase tracking-tighter">
-                                                <span class="text-indigo-400 w-24 text-[8px]">Status Laboran:</span>
-                                                <span class="px-2 py-0.5 rounded-md {{ $finalSub->laboran_status == 'ACC' ? 'bg-emerald-50 text-emerald-600' : ($finalSub->laboran_status == 'REVISI' ? 'bg-red-50 text-red-600 animate-pulse' : 'bg-amber-50 text-amber-600') }}">
-                                                    {{ $finalSub->laboran_status }}
-                                                </span>
-                                                @if($finalSub->laboran_status == 'ACC' && $finalSub->laboran_acc_at)
-                                                    <span class="text-indigo-300 text-[8px] border-l border-indigo-200 pl-3">{{ \Carbon\Carbon::parse($finalSub->laboran_acc_at)->format('d M Y') }}</span>
-                                                @endif
-                                            </div>
-                                            {{-- Dosen Status --}}
-                                            <div class="flex items-center gap-3 text-[9px] font-black uppercase tracking-tighter">
-                                                <span class="text-indigo-400 w-24 text-[8px]">Status Dosen:</span>
-                                                <span class="px-2 py-0.5 rounded-md {{ $finalSub->dosen_status == 'ACC' ? 'bg-emerald-50 text-emerald-600' : ($finalSub->dosen_status == 'REVISI' ? 'bg-red-50 text-red-600 animate-pulse' : 'bg-amber-50 text-amber-600') }}">
-                                                    {{ $finalSub->dosen_status }}
-                                                </span>
-                                                @if($finalSub->dosen_status == 'ACC' && $finalSub->dosen_acc_at)
-                                                    <span class="text-indigo-300 text-[8px] border-l border-indigo-200 pl-3">{{ \Carbon\Carbon::parse($finalSub->dosen_acc_at)->format('d M Y') }}</span>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    @endif
-                                @endif
-                            </div>
-
-                            <div class="flex items-center gap-3">
-                                @if(strtoupper(Auth::user()->role) === 'MAHASISWA')
-                                    <a href="{{ route('mahasiswa.final-tasks.manage', $course->finalTask->id) }}" class="px-5 py-3 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition active:scale-95 text-center min-w-[120px]">
-                                        Kelola Final
-                                    </a>
-                                @else
-                                    <a href="{{ route('final-tasks.index', $course->finalTask->id) }}" class="px-5 py-3 bg-slate-800 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 transition shadow-lg text-center min-w-[120px]">
-                                        Review Final
-                                    </a>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                    @endif
-
-                    {{-- 2. DAFTAR PERTEMUAN RUTIN --}}
                     @forelse($course->meetings->sortBy('meeting_number') as $meeting)
                         @php 
                             $sub = $meeting->submissions->where('student_id', auth()->id())->first(); 
@@ -228,39 +222,84 @@
                                         <span class="px-3 py-1 bg-slate-800 text-white text-[9px] font-black rounded-lg uppercase tracking-[0.1em]">
                                             P{{ $meeting->meeting_number }}
                                         </span>
+                                        
                                         @if(strtoupper(auth()->user()->role) === 'MAHASISWA')
-                                            @php $attendance = $meeting->attendances->where('student_id', auth()->id())->first(); @endphp
-                                            <span class="text-[9px] font-black uppercase tracking-widest {{ $attendance ? 'text-emerald-500' : 'text-gray-300' }}">
-                                                {{ $attendance ? '● Hadir' : '○ Belum Presensi' }}
+                                            {{-- PERBAIKAN LOGIKA PRESENSI AKURAT --}}
+                                            @php 
+                                                $attendance = $meeting->attendances->where('student_id', auth()->id())->first(); 
+                                                $anyAbsen = $meeting->attendances->count() > 0; // Cek apakah aslab sudah mulai absen siapapun
+                                                
+                                                if ($attendance) {
+                                                    $attStatus = strtoupper($attendance->status);
+                                                    $attConfig = match($attStatus) {
+                                                        'HADIR'          => ['color' => 'text-emerald-500', 'label' => '● Hadir'],
+                                                        'IZIN', 'SAKIT'  => ['color' => 'text-amber-500', 'label' => '● ' . ucfirst(strtolower($attStatus))],
+                                                        'ALPA', 'ALPHA'  => ['color' => 'text-red-500', 'label' => '● Alpa'],
+                                                        default          => ['color' => 'text-gray-300', 'label' => '○ Belum Presensi'],
+                                                    };
+                                                } else {
+                                                    // Jika record tidak ada, cek apakah aslab sudah proses absen kawan lain
+                                                    if ($anyAbsen) {
+                                                        $attConfig = ['color' => 'text-red-500', 'label' => '● Alpa'];
+                                                    } else {
+                                                        $attConfig = ['color' => 'text-gray-300', 'label' => '○ Belum Presensi'];
+                                                    }
+                                                }
+                                            @endphp
+                                            <span class="text-[9px] font-black uppercase tracking-widest {{ $attConfig['color'] }}">
+                                                {{ $attConfig['label'] }}
                                             </span>
                                         @endif
                                     </div>
                                     <h4 class="font-black text-gray-800 text-xl leading-tight group-hover:text-indigo-600 transition">{{ $meeting->title }}</h4>
                                     
-                                    {{-- BLOK UPDATE: STATUS TUGAS PERTEMUAN (Khusus Mahasiswa) --}}
-                                    @if(strtoupper(auth()->user()->role) === 'MAHASISWA' && $sub)
-                                    <div class="mt-5 space-y-2.5">
-                                        <div class="flex items-center gap-3 text-[9px] font-black uppercase tracking-tighter">
-                                            <span class="text-gray-400 w-24 text-[8px]">Status Aslab:</span>
-                                            <span class="px-2 py-0.5 rounded-md {{ $sub->aslab_status == 'ACC' ? 'bg-emerald-50 text-emerald-600' : ($sub->aslab_status == 'REVISI' ? 'bg-red-50 text-red-600 animate-pulse' : 'bg-amber-50 text-amber-600') }}">
-                                                {{ $sub->aslab_status }}
-                                            </span>
-                                            {{-- Tambahan Tanggal ACC Aslab --}}
-                                            @if($sub->aslab_status == 'ACC' && $sub->aslab_acc_at)
-                                                <span class="text-gray-400 text-[8px] border-l border-gray-200 pl-3">{{ \Carbon\Carbon::parse($sub->aslab_acc_at)->format('d M Y') }}</span>
+                                    @if(strtoupper(auth()->user()->role) === 'MAHASISWA')
+                                        @php 
+                                            $isPastDeadline = $meeting->deadline && now()->gt(\Carbon\Carbon::parse($meeting->deadline));
+                                            $isCompleted = $sub && strtoupper($sub->aslab_status) == 'ACC' && strtoupper($sub->laboran_status) == 'ACC';
+                                        @endphp
+                                        
+                                        <div class="mt-5 space-y-2.5">
+                                            @if($sub)
+                                                <div class="flex items-center gap-3 text-[9px] font-black uppercase tracking-tighter">
+                                                    <span class="text-gray-400 w-24 text-[8px]">Status Aslab:</span>
+                                                    <span class="px-2 py-0.5 rounded-md {{ $sub->aslab_status == 'ACC' ? 'bg-emerald-50 text-emerald-600' : ($sub->aslab_status == 'REVISI' ? 'bg-red-50 text-red-600 animate-pulse' : 'bg-amber-50 text-amber-600') }}">
+                                                        {{ $sub->aslab_status }}
+                                                    </span>
+                                                    @if($sub->aslab_status == 'ACC' && $sub->aslab_acc_at)
+                                                        <span class="text-gray-400 text-[8px] border-l border-gray-200 pl-3">{{ \Carbon\Carbon::parse($sub->aslab_acc_at)->format('d M Y') }}</span>
+                                                    @endif
+                                                </div>
+                                                <div class="flex items-center gap-3 text-[9px] font-black uppercase tracking-tighter">
+                                                    <span class="text-gray-400 w-24 text-[8px]">Status Laboran:</span>
+                                                    <span class="px-2 py-0.5 rounded-md {{ $sub->laboran_status == 'ACC' ? 'bg-emerald-50 text-emerald-600' : ($sub->laboran_status == 'REVISI' ? 'bg-red-50 text-red-600 animate-pulse' : 'bg-amber-50 text-amber-600') }}">
+                                                        {{ $sub->laboran_status }}
+                                                    </span>
+                                                    @if($sub->laboran_status == 'ACC' && $sub->laboran_acc_at)
+                                                        <span class="text-gray-400 text-[8px] border-l border-gray-200 pl-3">{{ \Carbon\Carbon::parse($sub->laboran_acc_at)->format('d M Y') }}</span>
+                                                    @endif
+                                                </div>
+
+                                                @if($isPastDeadline && !$isCompleted)
+                                                    <div class="mt-2 inline-flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 text-[9px] font-black rounded-lg uppercase tracking-widest border border-red-100">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                                        Lewat Deadline & Belum ACC Sepenuhnya
+                                                    </div>
+                                                @endif
+                                            @else
+                                                @if($isPastDeadline)
+                                                    <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 text-[9px] font-black rounded-lg uppercase tracking-widest border border-red-100">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                        Waktu Habis (Belum Mengumpulkan)
+                                                    </div>
+                                                @else
+                                                    <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 text-amber-600 text-[9px] font-black rounded-lg uppercase tracking-widest border border-amber-100">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                        Belum Mengumpulkan Tugas
+                                                    </div>
+                                                @endif
                                             @endif
                                         </div>
-                                        <div class="flex items-center gap-3 text-[9px] font-black uppercase tracking-tighter">
-                                            <span class="text-gray-400 w-24 text-[8px]">Status Laboran:</span>
-                                            <span class="px-2 py-0.5 rounded-md {{ $sub->laboran_status == 'ACC' ? 'bg-emerald-50 text-emerald-600' : ($sub->laboran_status == 'REVISI' ? 'bg-red-50 text-red-600 animate-pulse' : 'bg-amber-50 text-amber-600') }}">
-                                                {{ $sub->laboran_status }}
-                                            </span>
-                                            {{-- Tambahan Tanggal ACC Laboran --}}
-                                            @if($sub->laboran_status == 'ACC' && $sub->laboran_acc_at)
-                                                <span class="text-gray-400 text-[8px] border-l border-gray-200 pl-3">{{ \Carbon\Carbon::parse($sub->laboran_acc_at)->format('d M Y') }}</span>
-                                            @endif
-                                        </div>
-                                    </div>
                                     @endif
                                 </div>
 
@@ -304,7 +343,6 @@
 
     {{-- MODALS SECTION --}}
     @if(in_array(strtoupper(auth()->user()->role), ['DOSEN', 'ASLAB', 'LABORAN']))
-    
     {{-- Modal Tambah Pertemuan --}}
     <div id="modalMeeting" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in duration-300">

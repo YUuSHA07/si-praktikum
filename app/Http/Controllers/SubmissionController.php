@@ -181,17 +181,57 @@ class SubmissionController extends Controller
                         ->with('success', 'Status '. $statusInput .' berhasil disimpan.');
     }
 
-    /**
-     * DASHBOARD MAHASISWA: Rekap semua tugas (My Submissions)
+/**
+     * DASHBOARD MAHASISWA: Rekap semua tugas (termasuk yang belum kumpul)
      */
     public function mySubmissions()
     {
-        $submissions = Submission::where('student_id', Auth::id())
-            ->with(['meeting.course'])
-            ->latest('last_upload_at')
-            ->get();
+        $userId = Auth::id();
 
-        return view('mahasiswa.submissions.index', compact('submissions'));
+        // 1. Ambil semua Pertemuan dari kelas yang diikuti mahasiswa
+        $meetings = \App\Models\Meeting::whereHas('course.students', function($q) use ($userId) {
+            $q->where('users.id', $userId);
+        })->with(['course', 'submissions' => function($q) use ($userId) {
+            $q->where('student_id', $userId);
+        }])->get();
+
+        // 2. Ambil semua Tugas Final dari kelas yang diikuti mahasiswa
+        $finalTasks = \App\Models\FinalTask::whereHas('course.students', function($q) use ($userId) {
+            $q->where('users.id', $userId);
+        })->with(['course', 'submissions' => function($q) use ($userId) {
+            $q->where('student_id', $userId)->where('is_final', true);
+        }])->get();
+
+        $allTasks = collect();
+
+        // 3. Masukkan pertemuan ke koleksi
+        foreach ($meetings as $meeting) {
+            $allTasks->push((object)[
+                'is_final'   => false,
+                'course'     => $meeting->course,
+                'title'      => $meeting->title ?? 'Tugas Tanpa Judul',
+                'number'     => 'Pertemuan ' . $meeting->meeting_number,
+                'deadline'   => $meeting->deadline,
+                'submission' => $meeting->submissions->first(), // Ambil submission jika ada
+            ]);
+        }
+
+        // 4. Masukkan tugas final ke koleksi
+        foreach ($finalTasks as $ft) {
+            $allTasks->push((object)[
+                'is_final'   => true,
+                'course'     => $ft->course,
+                'title'      => 'Laporan Final',
+                'number'     => 'TUGAS FINAL',
+                'deadline'   => $ft->deadline,
+                'submission' => $ft->submissions->first(), // Ambil submission jika ada
+            ]);
+        }
+
+        // 5. Urutkan berdasarkan deadline terdekat
+        $allTasks = $allTasks->sortByDesc('deadline');
+
+        return view('mahasiswa.submissions.index', compact('allTasks'));
     }
 
     /**
