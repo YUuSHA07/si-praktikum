@@ -64,4 +64,21 @@ class MeetingController extends Controller
 
         return redirect()->back()->with('success', 'Pertemuan berhasil ditambahkan!');
     }
+
+    public function update(Request $request, Meeting $meeting)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'module_drive_link' => 'nullable|url',
+        ]);
+
+        $meeting->update([
+            'title' => $request->title,
+            'description' => $request->description,
+            'module_drive_link' => $request->module_drive_link,
+        ]);
+
+        return back()->with('success', 'Data pertemuan berhasil diperbarui!');
+    }
 }

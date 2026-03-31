@@ -122,6 +122,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Route untuk Update Deadline (Baris 11 di Blade)
     Route::put('/meetings/{id}/deadline', [App\Http\Controllers\SubmissionController::class, 'updateDeadline'])->name('meetings.update-deadline');
+
+    // Route untuk Update Link/Revisi (Baris 130 di Blade)
+    Route::put('/meetings/{meeting}', [App\Http\Controllers\MeetingController::class, 'update'])->name('meetings.update');
 });
 
 require __DIR__.'/auth.php';
