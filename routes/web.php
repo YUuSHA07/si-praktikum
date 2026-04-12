@@ -128,6 +128,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Route untuk Update Deskripsi (Baris 11 di Blade)
     Route::put('/final-tasks/{finalTask}/update-description', [App\Http\Controllers\FinalTaskController::class, 'updateDescription'])->name('final-tasks.update-description');
+
+    // Rute Manajemen Semester
+    Route::resource('semesters', App\Http\Controllers\SemesterController::class)->except(['create', 'show', 'edit']);
+    Route::patch('semesters/{semester}/set-active', [App\Http\Controllers\SemesterController::class, 'setActive'])->name('semesters.set-active');
+
+    // Route untuk halaman Arsip
+    Route::get('/arsip', [App\Http\Controllers\ArchiveController::class, 'index'])->name('archives.index');
 });
 
 require __DIR__.'/auth.php';
