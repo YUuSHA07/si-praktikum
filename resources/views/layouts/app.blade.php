@@ -37,7 +37,7 @@
             </div>
             
             {{-- Letakkan sebelum dropdown profil di header --}}
-            @if(strtoupper(auth()->user()->active_role) === 'ASLAB')
+            @if(strtoupper(auth()->user()->role) === 'ASLAB')
                 <form action="{{ route('role.switch') }}" method="POST" class="mr-4 hidden sm:block">
                     @csrf
                     <button type="submit" class="group flex items-center gap-3 px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-xl hover:bg-indigo-600 transition-all shadow-sm">
