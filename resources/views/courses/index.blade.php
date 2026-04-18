@@ -6,7 +6,7 @@
     <div class="max-w-[95rem] mx-auto py-8 px-4">
         
         {{-- Form Join Khusus Mahasiswa --}}
-        @if(strtoupper(auth()->user()->role) === 'MAHASISWA')
+        @if(strtoupper(auth()->user()->active_role) === 'MAHASISWA')
         <div class="mb-8 bg-indigo-900 rounded-[2rem] p-8 text-white shadow-xl shadow-indigo-100 relative overflow-hidden">
             <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl pointer-events-none"></div>
             <div class="md:flex items-center justify-between relative z-10">
@@ -48,7 +48,7 @@
                 </div>
             </div>
             
-            @if(strtoupper(auth()->user()->role) === 'LABORAN')
+            @if(strtoupper(auth()->user()->active_role) === 'LABORAN')
             <div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
                 
                 {{-- TOGGLE SWITCH FILTER KELAS (KHUSUS LABORAN) --}}
@@ -124,7 +124,7 @@
                     </div>
 
                     {{-- Tampilkan Kode Enrollment HANYA untuk Non-Mahasiswa --}}
-                    @if(strtoupper(auth()->user()->role) !== 'MAHASISWA')
+                    @if(strtoupper(auth()->user()->active_role) !== 'MAHASISWA')
                     <div class="mt-8 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50 text-center relative group/code overflow-hidden">
                         <div class="absolute inset-0 bg-indigo-100/0 group-hover/code:bg-indigo-100/50 transition"></div>
                         <p class="text-[8px] text-indigo-400 uppercase font-black tracking-widest relative z-10 mb-1">Enrollment Code</p>

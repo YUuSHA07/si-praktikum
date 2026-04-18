@@ -53,7 +53,7 @@
                             <th class="px-8 py-6 tracking-widest whitespace-nowrap">NIM</th>
                             
                             {{-- Akses Aksi Hanya Untuk Dosen/Laboran/Aslab --}}
-                            @if(in_array(strtoupper(auth()->user()->role), ['ASLAB', 'LABORAN', 'DOSEN']))
+                            @if(in_array(strtoupper(auth()->user()->active_role), ['ASLAB', 'LABORAN', 'DOSEN']))
                                 <th class="px-8 py-6 tracking-widest text-center uppercase whitespace-nowrap">Aksi</th>
                             @endif
                         </tr>
@@ -80,7 +80,7 @@
                                     <span class="text-indigo-600 font-mono font-bold">{{ $student->id }}</span>
                                 </td>
                                 
-                                @if(in_array(strtoupper(auth()->user()->role), ['ASLAB', 'LABORAN', 'DOSEN']))
+                                @if(in_array(strtoupper(auth()->user()->active_role), ['ASLAB', 'LABORAN', 'DOSEN']))
                                 <td class="px-8 py-5 text-center whitespace-nowrap">
                                     <form action="{{ route('courses.remove-student', [$course->id, $student->id]) }}" method="POST">
                                         @csrf

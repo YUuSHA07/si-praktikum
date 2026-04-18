@@ -42,4 +42,15 @@ class User extends Authenticatable
     public function submissions() {
         return $this->hasMany(Submission::class, 'student_id');
     }
+
+    /**
+     * Mendapatkan role yang sedang aktif digunakan saat ini.
+     * Jika Aslab sedang ganti mode, ini akan membaca dari session.
+     */
+
+    public function getActiveRoleAttribute()
+    {
+        // Mengambil dari session, jika tidak ada gunakan kolom 'role' asli
+        return session('active_role', $this->getRawOriginal('role'));
+    }
 }

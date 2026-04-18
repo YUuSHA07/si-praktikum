@@ -24,7 +24,7 @@ class CourseController extends Controller
         }
 
         $user = Auth::user();
-        $role = strtoupper($user->role);
+        $role = strtoupper($user->active_role);
 
         // Query dasar: Hanya kelas di semester aktif
         $query = Course::with(['dosen', 'aslab', 'laboran'])->where('semester_id', $activeSemester->id)->latest();

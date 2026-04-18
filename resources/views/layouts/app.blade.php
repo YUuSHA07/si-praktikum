@@ -35,7 +35,24 @@
                 </button>
                 <span class="text-xl font-black tracking-tighter uppercase text-indigo-900">SI-<span class="text-indigo-500">Praktikum</span></span>
             </div>
-
+            
+            {{-- Letakkan sebelum dropdown profil di header --}}
+            @if(strtoupper(auth()->user()->active_role) === 'ASLAB')
+                <form action="{{ route('role.switch') }}" method="POST" class="mr-4 hidden sm:block">
+                    @csrf
+                    <button type="submit" class="group flex items-center gap-3 px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-xl hover:bg-indigo-600 transition-all shadow-sm">
+                        <div class="p-1.5 bg-white rounded-lg group-hover:bg-indigo-500 transition-colors">
+                            <svg class="w-4 h-4 text-indigo-500 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                        </div>
+                        <div class="text-left">
+                            <span class="block text-[8px] font-black text-indigo-400 group-hover:text-indigo-200 uppercase tracking-widest leading-none mb-1">Mode Saat Ini</span>
+                            <span class="block text-xs font-black text-indigo-700 group-hover:text-white uppercase tracking-tight leading-none">
+                                {{ auth()->user()->active_role }}
+                            </span>
+                        </div>
+                    </button>
+                </form>
+            @endif
             {{-- Kanan: Profile Dropdown --}}
             <div class="relative flex-shrink-0" x-data="{ open: false }">
                 <button @click="open = !open" class="flex items-center space-x-3 focus:outline-none group p-1.5 hover:bg-gray-50 rounded-full transition max-w-[200px] sm:max-w-[300px]">
@@ -43,7 +60,7 @@
                         <p class="text-sm font-bold text-gray-800 group-hover:text-indigo-600 transition truncate" title="{{ Auth::user()->name }}">
                             {{ Auth::user()->name }}
                         </p>
-                        <p class="text-[10px] text-gray-500 font-medium italic uppercase tracking-tighter">{{ Auth::user()->role }}</p>
+                        <p class="text-[10px] text-gray-500 font-medium italic uppercase tracking-tighter">{{ Auth::user()->active_role }}</p>
                     </div>
                     <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm ring-1 ring-gray-200 flex-shrink-0">
                         @if(Auth::user()->avatar)
@@ -65,7 +82,7 @@
                     
                     <div class="px-4 py-2 border-b border-gray-50 mb-1 sm:hidden">
                         <p class="text-xs font-bold text-gray-800 break-words">{{ Auth::user()->name }}</p>
-                        <p class="text-[10px] text-gray-400">{{ Auth::user()->role }}</p>
+                        <p class="text-[10px] text-gray-400">{{ Auth::user()->active_role }}</p>
                     </div>
 
                     <a href="{{ route('profile.edit') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition">
@@ -104,13 +121,14 @@
                         Arsip Praktikum
                     </x-nav-link-sidebar>
                     <x-nav-link-sidebar :href="route('courses.index')" :active="request()->routeIs('courses.index')">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                        {{-- Ikon Buku Terbuka (Daftar Kelas) --}}
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
                         Daftar Kelas
                     </x-nav-link-sidebar>
 
                     <div class="my-4 border-t border-indigo-800/50"></div>
 
-                    @if(auth()->user()->role === 'Laboran')
+                    @if(auth()->user()->active_role === 'Laboran')
                         <p class="px-4 text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-2">Laboran</p>
                         <x-nav-link-sidebar :href="route('users.index')" :active="request()->routeIs('users.index')">
                             <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
@@ -121,7 +139,8 @@
                             Import User
                         </x-nav-link-sidebar>
                         <x-nav-link-sidebar :href="route('courses.create')" :active="request()->routeIs('courses.create')">
-                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                            {{-- Ikon Folder Plus (Buat Kelas Baru) --}}
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></svg>
                             Buat Kelas
                         </x-nav-link-sidebar>
                         <x-nav-link-sidebar :href="route('semesters.index')" :active="request()->routeIs('semesters.index')">
@@ -129,13 +148,13 @@
                             Semester Aktif
                         </x-nav-link-sidebar>
 
-                    @elseif(auth()->user()->role === 'Dosen')
+                    @elseif(auth()->user()->active_role === 'Dosen')
                         <p class="px-4 text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-2">Dosen</p>
 
-                    @elseif(auth()->user()->role === 'Aslab')
+                    @elseif(auth()->user()->active_role === 'Aslab')
                         <p class="px-4 text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-2">Aslab</p>
 
-                    @elseif(auth()->user()->role === 'Mahasiswa')
+                    @elseif(auth()->user()->active_role === 'Mahasiswa')
                         <p class="px-4 text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-2">Mahasiswa</p>
                         <x-nav-link-sidebar :href="route('submissions.my-index')" :active="request()->routeIs('submissions.my-index')">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>

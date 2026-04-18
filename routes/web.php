@@ -140,6 +140,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/courses/{course}/students', [App\Http\Controllers\CourseController::class, 'students'])->name('courses.students');
     // Route untuk mengeluarkan mahasiswa dari kelas (Hanya Laboran/Dosen/aslab)
     Route::delete('/courses/{course}/students/{student}', [App\Http\Controllers\CourseController::class, 'removeStudent'])->name('courses.remove-student');
+
+    // Pastikan ini di dalam middleware auth (dan idealnya middleware khusus Laboran)
+    Route::post('/users/{user}/make-aslab', [App\Http\Controllers\UserController::class, 'makeAslab'])->name('users.make-aslab');  
+    
+    // Route untuk switch role (Aslab <-> Mahasiswa)
+    Route::post('/switch-role', [App\Http\Controllers\RoleController::class, 'switchRole'])->name('role.switch');
+    // Tambahkan ini di dalam group middleware yang sesuai (biasanya laboran)
+    Route::post('/users/{user}/revoke-aslab', [App\Http\Controllers\UserController::class, 'revokeAslab'])->name('users.revoke-aslab');
 });
 
 require __DIR__.'/auth.php';
