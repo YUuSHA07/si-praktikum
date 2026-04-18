@@ -15,13 +15,13 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Grup Kelas</label>
-                        <input type="text" name="class_group" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Contoh: ILKOM-1" required>
+                        <label class="block text-sm font-medium text-gray-700">Kelas</label>
+                        <input type="text" name="class_group" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Contoh: IK-1" required>
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Semester (Mahasiswa)</label>
-                        <input type="number" name="target_semester" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="5" required>
+                        <input type="number" name="target_semester" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Contoh: 5" required>
                     </div>
 
                     <div>

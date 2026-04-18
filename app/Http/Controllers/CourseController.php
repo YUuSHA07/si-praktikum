@@ -14,43 +14,41 @@ class CourseController extends Controller
     /**
      * Menampilkan daftar kelas berdasarkan Role User
      */
-    public function index()
+    public function index(Request $request)
     {
-        // 1. Ambil semester yang sedang aktif
         $activeSemester = Semester::where('is_active', true)->first();
         
-        // Jika tidak ada semester aktif, buat koleksi kosong agar tidak error
+        // Jika tidak ada semester aktif
         if (!$activeSemester) {
-            return view('courses.index', [
-                'courses' => collect([]),
-                'activeSemester' => (object)['name' => 'Tidak Ada Semester Aktif']
-            ]);
+            return view('courses.index', ['courses' => collect(), 'activeSemester' => null]);
         }
 
         $user = Auth::user();
+        $role = strtoupper($user->role);
 
-        // 2. Filter data berdasarkan Role
-        if ($user->role === 'Mahasiswa') {
-            // Mahasiswa hanya melihat kelas yang sudah di-JOIN (melalui tabel pivot)
-            $courses = $user->courses()
-                            ->where('semester_id', $activeSemester->id)
-                            ->with(['dosen', 'aslab']) // Eager loading agar ringan
-                            ->get();
-        } elseif ($user->role === 'Laboran') {
-            // Laboran melihat semua kelas di semester aktif
-            $courses = Course::where('semester_id', $activeSemester->id)
-                            ->with(['dosen', 'aslab'])
-                            ->get();
-        } else {
-            // Dosen & Aslab melihat kelas di mana mereka ditugaskan
-            $courses = Course::where('semester_id', $activeSemester->id)
-                            ->where(function($query) use ($user) {
-                                $query->where('dosen_id', $user->id)
-                                      ->orWhere('aslab_id', $user->id);
-                            })
-                            ->with(['dosen', 'aslab'])
-                            ->get();
+        // Query dasar: Hanya kelas di semester aktif
+        $query = Course::with(['dosen', 'aslab', 'laboran'])->where('semester_id', $activeSemester->id)->latest();
+
+        // Logika Filter
+        if ($role === 'MAHASISWA') {
+            $query->whereHas('students', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            });
+        } elseif ($role === 'DOSEN') {
+            $query->where('dosen_id', $user->id);
+        } elseif ($role === 'ASLAB') {
+            $query->where('aslab_id', $user->id);
+        } elseif ($role === 'LABORAN') {
+            // Cek parameter 'view' dari URL
+            $viewType = $request->query('view', 'my_classes'); // Default: kelas milik dia sendiri
+
+            if ($viewType === 'my_classes') {
+                $query->where('laboran_id', $user->id);
+            }
+            // Jika view === 'all', query tidak di-where laboran_id, jadi tampil semua
         }
+
+        $courses = $query->get();
 
         return view('courses.index', compact('courses', 'activeSemester'));
     }
