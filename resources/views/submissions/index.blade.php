@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header_title">Monitoring: {{ $meeting->title }}</x-slot>
 
-    <div class="max-w-[95rem] mx-auto py-8 px-4">
+    <div class="max-w-[95rem] mx-auto py-0 px-4">
         
         {{-- BARIS 1: NAVIGASI, JUDUL, DAN DEADLINE --}}
         <div class="mb-8 flex flex-col lg:flex-row lg:items-end justify-between gap-6">

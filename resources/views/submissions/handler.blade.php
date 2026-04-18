@@ -3,7 +3,7 @@
         Review Tugas: {{ $submission->student->name }}
     </x-slot>
 
-    <div class="max-w-[98rem] mx-auto py-6 px-4">
+    <div class="max-w-[98rem] mx-auto py-0 px-4">
         {{-- Navigasi & Status Bar --}}
         <div class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <a href="{{ route('submissions.index', $submission->meeting_id) }}" 
