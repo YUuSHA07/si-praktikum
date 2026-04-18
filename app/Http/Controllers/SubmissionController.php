@@ -261,4 +261,55 @@ class SubmissionController extends Controller
             'reviewed_by'   => Auth::id(),
         ]);
     }
+
+
+    /**
+     * Menampilkan daftar tugas pending dengan sistem Hierarki Waterfall
+     * Alur: ASLAB -> LABORAN (Jika Normal) -> DOSEN (Jika Final)
+     */
+    public function pending(\Illuminate\Http\Request $request)
+    {
+        $user = $request->user();
+        $role = strtoupper($user->active_role);
+
+        // Eager Load untuk performa
+        $query = \App\Models\Submission::with(['student', 'meeting.course', 'finalTask.course']);
+
+        if ($role === 'ASLAB') {
+            /**
+             * 1. ASLAB: Garda terdepan. 
+             * Melihat semua tugas (Biasa & Final) yang dikirim mahasiswa di kelasnya.
+             */
+            $query->where('aslab_status', 'PENDING')
+                ->where(function($q) use ($user) {
+                    $q->whereHas('meeting.course', fn($c) => $c->where('aslab_id', $user->id))
+                        ->orWhereHas('finalTask.course', fn($c) => $c->where('aslab_id', $user->id));
+                });
+        } 
+        elseif ($role === 'LABORAN') {
+            /**
+             * 2. LABORAN: Filter kedua.
+             * Hanya tampil jika ASLAB sudah ACC (aslab_status = 'ACC').
+             */
+            $query->where('aslab_status', 'ACC')
+                ->where('laboran_status', 'PENDING');
+        } 
+        elseif ($role === 'DOSEN') {
+            /**
+             * 3. DOSEN: Filter akhir (Hanya untuk Final Task).
+             * Hanya tampil jika: ASLAB ACC + LABORAN ACC + JENIS FINAL.
+             */
+            $query->where('aslab_status', 'ACC')
+                ->where('laboran_status', 'ACC')
+                ->where('dosen_status', 'PENDING')
+                ->where('is_final', true) // Hanya untuk tugas yang is_final = 1
+                ->whereHas('finalTask.course', function($q) use ($user) {
+                    $q->where('dosen_id', $user->id);
+                });
+        }
+
+        $submissions = $query->latest()->get();
+
+        return view('submissions.pending', compact('submissions'));
+    }
 }

@@ -148,6 +148,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/switch-role', [App\Http\Controllers\RoleController::class, 'switchRole'])->name('role.switch');
     // Tambahkan ini di dalam group middleware yang sesuai (biasanya laboran)
     Route::post('/users/{user}/revoke-aslab', [App\Http\Controllers\UserController::class, 'revokeAslab'])->name('users.revoke-aslab');
+
+    // Route untuk halaman daftar submission yang pending (untuk reviewer)
+    Route::get('/submissions/pending', [App\Http\Controllers\SubmissionController::class, 'pending'])->name('submissions.pending');
 });
 
 require __DIR__.'/auth.php';
