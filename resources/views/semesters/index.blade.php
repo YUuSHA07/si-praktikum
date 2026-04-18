@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header_title">Manajemen Semester</x-slot>
 
-    <div class="max-w-[95rem] mx-auto py-8 px-4">
+    <div class="max-w-[95rem] mx-auto py-0 px-4">
         
         {{-- Alert Notifikasi --}}
         @if(session('success'))

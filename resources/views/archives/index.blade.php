@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header_title">Arsip Praktikum</x-slot>
 
-    <div class="max-w-[95rem] mx-auto py-8 px-4">
+    <div class="max-w-[95rem] mx-auto py-0 px-4">
         
         {{-- HEADER SECTION --}}
         <div class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">

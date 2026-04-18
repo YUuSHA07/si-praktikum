@@ -48,8 +48,8 @@
                     <tbody class="divide-y divide-gray-50">
                         @forelse($meeting->course->students as $student)
                         @php
-                            // Ambil status dari database jika ada, default ke 'Alpha' jika belum ada
-                            $savedStatus = $existingAttendances[$student->id]->status ?? 'Alpha';
+                            // Ambil status dari database jika ada, default ke 'Hadir' jika belum ada
+                            $savedStatus = $existingAttendances[$student->id]->status ?? 'Hadir';
                         @endphp
                         <tr class="hover:bg-gray-50/50 transition">
                             <td class="px-6 py-4">
