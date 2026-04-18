@@ -3,13 +3,6 @@
         Presensi: {{ $meeting->title }}
     </x-slot>
 
-    {{-- Alert Sukses --}}
-    @if(session('success'))
-        <div class="mb-4 p-4 bg-emerald-50 border-l-4 border-emerald-500 text-emerald-700 text-sm font-bold rounded shadow-sm">
-            {{ session('success') }}
-        </div>
-    @endif
-
     <div class="mb-6">
         <a href="{{ route('courses.show', $meeting->course_id) }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-semibold flex items-center transition">
             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>

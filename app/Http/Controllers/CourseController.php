@@ -66,7 +66,7 @@ class CourseController extends Controller
     /**
      * Simpan kelas baru & Generate Kode Otomatis
      */
-    public function store(Request $request)
+public function store(Request $request)
     {
         $request->validate([
             'course_name' => 'required|string|max:255',
@@ -78,7 +78,7 @@ class CourseController extends Controller
 
         $activeSemester = Semester::where('is_active', true)->first();
 
-        // Pencegahan Double Insert manual
+        // Pencegahan Double Insert
         $exists = Course::where('course_name', $request->course_name)
             ->where('class_group', $request->class_group)
             ->where('semester_id', $activeSemester->id)
@@ -88,14 +88,16 @@ class CourseController extends Controller
             return redirect()->back()->with('error', 'Kelas ini sudah ada!');
         }
 
+        // Simpan dengan menyertakan laboran_id (ID pembuat kelas)
         Course::create([
             'semester_id' => $activeSemester->id,
+            'laboran_id'  => Auth::id(), // <--- PERBAIKAN DI SINI
             'course_name' => $request->course_name,
             'class_group' => $request->class_group,
             'target_semester' => $request->target_semester,
             'dosen_id' => $request->dosen_id,
             'aslab_id' => $request->aslab_id,
-            'enrollment_code' => strtoupper(Str::random(6)), // Generate kode 6 digit
+            'enrollment_code' => strtoupper(Str::random(6)),
         ]);
 
         return redirect()->route('courses.index')->with('success', 'Kelas berhasil dibuat!');
