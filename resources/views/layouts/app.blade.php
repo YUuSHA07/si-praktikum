@@ -86,6 +86,18 @@
                         <p class="text-[10px] text-gray-400">{{ Auth::user()->active_role }}</p>
                     </div>
 
+                    {{-- Di dalam dropdown profil, di atas "Edit Profil" --}}
+                    @if(strtoupper(auth()->user()->role) === 'ASLAB')
+                        <form action="{{ route('role.switch') }}" method="POST" class="sm:hidden">
+                            @csrf
+                            <button type="submit" class="flex items-center w-full px-4 py-2 text-sm text-indigo-600 font-bold hover:bg-indigo-50 transition">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                                Ganti Mode (Ke {{ auth()->user()->active_role === 'Aslab' ? 'Mahasiswa' : 'Aslab' }})
+                            </button>
+                        </form>
+                        <hr class="my-1 border-gray-50 sm:hidden">
+                    @endif
+
                     <a href="{{ route('profile.edit') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                         Edit Profil
