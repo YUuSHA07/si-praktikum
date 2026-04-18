@@ -58,7 +58,6 @@
                                         {{-- Judul --}}
                                         <div class="flex-1">
                                             <h3 class="text-xl font-black text-gray-700 group-hover:text-gray-900 leading-tight mb-2 uppercase">{{ $course->course_name }}</h3>
-                                            <p class="text-[10px] text-gray-400 font-bold tracking-widest uppercase">Kode: {{ $course->course_code ?? '-' }}</p>
                                         </div>
 
                                         {{-- Info Personal --}}
