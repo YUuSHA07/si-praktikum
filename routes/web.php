@@ -135,6 +135,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Route untuk halaman Arsip
     Route::get('/arsip', [App\Http\Controllers\ArchiveController::class, 'index'])->name('archives.index');
+
+    // Route untuk halaman daftar mahasiswa per kelas (semua role bisa akses)
+    Route::get('/courses/{course}/students', [App\Http\Controllers\CourseController::class, 'students'])->name('courses.students');
+    // Route untuk mengeluarkan mahasiswa dari kelas (Hanya Laboran/Dosen/aslab)
+    Route::delete('/courses/{course}/students/{student}', [App\Http\Controllers\CourseController::class, 'removeStudent'])->name('courses.remove-student');
 });
 
 require __DIR__.'/auth.php';

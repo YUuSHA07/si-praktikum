@@ -138,4 +138,28 @@ class CourseController extends Controller
 
         return view('courses.show', compact('course'));
     }
+
+    // Method untuk menampilkan daftar mahasiswa
+    public function students(\App\Models\Course $course)
+    {
+        // Pastikan relasi students sudah diload dan diurutkan berdasarkan nama
+        $students = $course->students()->orderBy('id', 'asc')->get();
+        return view('attendance.students', compact('course', 'students'));
+    }
+
+    // Method untuk mengeluarkan mahasiswa dari kelas
+// Method untuk mengeluarkan mahasiswa dari kelas
+    public function removeStudent(Request $request, \App\Models\Course $course, \App\Models\User $student)
+    {
+        // Gunakan $request->user() sebagai ganti auth()->user()
+        $user = $request->user();
+
+        // Hanya Aslab, Laboran, atau Dosen yang boleh mengeluarkan
+        if (in_array(strtoupper($user->role), ['ASLAB', 'LABORAN', 'DOSEN'])) {
+            $course->students()->detach($student->id);
+            return back()->with('success', 'Mahasiswa ' . $student->name . ' berhasil dikeluarkan dari kelas.');
+        }
+        
+        return back()->with('error', 'Anda tidak memiliki hak akses untuk aksi ini.');
+    }
 }

@@ -19,7 +19,6 @@ return new class extends Migration
             $table->string('student_id', 20);
             $table->foreign('student_id')->references('id')->on('users')->onDelete('cascade');
             
-            $table->timestamp('joined_at')->useCurrent();
             $table->timestamps();
         });
     }
