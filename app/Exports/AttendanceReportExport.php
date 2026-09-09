@@ -68,9 +68,9 @@ class AttendanceReportExport implements FromCollection, WithHeadings, WithMappin
         ];
 
         foreach ($this->meetings as $m) {
-            $status = $row->per_meeting_status[$m->id] ?? '0';
+            $status = $row->per_meeting_status[$m->id] ?? '-';
             if ($status === 'A') { $status = 'TK'; } // Konversi A ke TK
-            $mappedData[] = ($status === '-' || !$status) ? '0' : $status;
+            $mappedData[] = ($status === '-' || !$status) ? '-' : $status;
         }
 
         $hadir = isset($row->hadir) && $row->hadir !== false ? (int)$row->hadir : 0;

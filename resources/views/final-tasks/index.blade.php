@@ -240,12 +240,36 @@
                                     @endif
                                 </td>
 
+                                {{-- KOLOM AKSI DENGAN SYARAT ACC BERJENJANG --}}
                                 <td class="px-8 py-5 text-center whitespace-nowrap">
                                     @if($sub)
-                                        @if(strtoupper(auth()->user()->active_role) === 'DOSEN')
-                                            <a href="{{ $sub->submission_link }}" target="_blank" class="whitespace-nowrap inline-block bg-emerald-600 text-white px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase hover:bg-emerald-700 shadow-xl active:scale-95 transition-all tracking-widest">Lihat File</a>
+                                        @php
+                                            $isApprovedByAslabAndLaboran = ($aslabStat === 'ACC' && $laboranStat === 'ACC');
+                                            $userRole = strtoupper(auth()->user()->active_role);
+                                        @endphp
+
+                                        @if($userRole === 'DOSEN')
+                                            @if($isApprovedByAslabAndLaboran)
+                                                {{-- Dosen diarahkan ke Handler untuk melakukan ACC Dosen --}}
+                                                <a href="{{ route('final-tasks.handler', $sub->id) }}" 
+                                                class="whitespace-nowrap inline-block bg-emerald-600 text-white px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase hover:bg-emerald-700 shadow-xl active:scale-95 transition-all tracking-widest">
+                                                    Review File
+                                                </a>
+                                            @else
+                                                {{-- Kunci tombol jika Aslab / Laboran belum ACC --}}
+                                                <div class="inline-flex flex-col items-center gap-1">
+                                                    <button type="button" disabled 
+                                                            class="whitespace-nowrap inline-block bg-gray-200 text-gray-400 px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase cursor-not-allowed border border-gray-300 tracking-widest">
+                                                        Menunggu ACC Aslab & Laboran
+                                                    </button>
+                                                </div>
+                                            @endif
                                         @else
-                                            <a href="{{ route('final-tasks.handler', $sub->id) }}" class="whitespace-nowrap inline-block bg-indigo-600 text-white px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase hover:bg-indigo-700 shadow-xl active:scale-95 transition-all tracking-widest">Review File</a>
+                                            {{-- Role ASLAB / LABORAN --}}
+                                            <a href="{{ route('final-tasks.handler', $sub->id) }}" 
+                                            class="whitespace-nowrap inline-block bg-indigo-600 text-white px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase hover:bg-indigo-700 shadow-xl active:scale-95 transition-all tracking-widest">
+                                                Review File
+                                            </a>
                                         @endif
                                     @else
                                         <span class="whitespace-nowrap text-gray-300 text-[10px] font-black italic tracking-widest opacity-50 block text-center">N/A</span>
@@ -262,7 +286,7 @@
         </div>
     </div>
 
-    {{-- MODAL EDIT DESKRIPSI FINAL TASK (BARU - Tanpa Edit Link) --}}
+    {{-- MODAL EDIT DESKRIPSI FINAL TASK --}}
     @if(in_array(strtoupper(auth()->user()->active_role), ['ASLAB', 'LABORAN', 'DOSEN']))
     <div id="modalEditFinalTask" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in duration-300">
@@ -288,7 +312,6 @@
     @endif
 
     <script>
-        {{-- FUNGSI MODAL (BARU) --}}
         function openEditFinalModal() {
             document.getElementById('modalEditFinalTask').classList.replace('hidden', 'flex');
             document.body.style.overflow = 'hidden';

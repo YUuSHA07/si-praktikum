@@ -27,7 +27,7 @@ return new class extends Migration
                 ->references('id')
                 ->on('users');
             
-            $table->enum('status', ['Hadir', 'Sakit', 'Izin', 'Alpha']);
+            $table->enum('status', ['Hadir', 'Sakit', 'Izin', 'Tanpa Keterangan', 'H', 'S', 'I', 'TK', 'Alpha']);
             $table->date('attendance_date');
             $table->timestamps();
         });

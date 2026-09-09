@@ -36,13 +36,22 @@ class AttendanceController extends Controller
         $today = now()->toDateString();
 
         foreach ($request->attendances as $studentId => $status) {
+            // Konversi nilai status jika dari form dikirim "Tanpa Keterangan"
+            $formattedStatus = match(strtoupper((string)$status)) {
+                'TANPA KETERANGAN', 'ALPHA', 'A' => 'TK', // Sesuaikan ke 'TK' atau 'Alpha'/ENUM di DB kamu
+                'HADIR' => 'Hadir',
+                'SAKIT' => 'Sakit',
+                'IZIN'  => 'Izin',
+                default => $status,
+            };
+
             \App\Models\Attendance::query()->updateOrCreate(
                 [
                     'meeting_id' => $meeting->id, 
                     'student_id' => $studentId
                 ],
                 [
-                    'status'          => $status,
+                    'status'          => $formattedStatus,
                     'attendance_date' => $today
                 ]
             );
@@ -112,10 +121,10 @@ class AttendanceController extends Controller
                         'SAKIT' => 'S',
                         'IZIN'  => 'I',
                         'TANPA KETERANGAN', 'ALPHA', 'TK', 'A' => 'TK', // Menghasilkan TK
-                        default => substr($st, 0, 1) ?: '0'
+                        default => substr($st, 0, 1) ?: '-'
                     };
                 } else {
-                    $perMeetingStatus[$m->id] = '0';
+                    $perMeetingStatus[$m->id] = '-';
                 }
             }
 

@@ -159,6 +159,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/tutorials', [TutorialController::class, 'index'])->name('tutorials.index');
     Route::post('/tutorials', [TutorialController::class, 'store'])->name('tutorials.store');
     Route::delete('/tutorials/{id}', [TutorialController::class, 'destroy'])->name('tutorials.destroy');
+    Route::get('/courses/{id}/print-card', [CourseController::class, 'printCard'])->name('courses.print-card');
 });
 
 require __DIR__.'/auth.php';

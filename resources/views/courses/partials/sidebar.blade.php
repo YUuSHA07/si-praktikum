@@ -6,16 +6,16 @@
             {{-- DOSEN --}}
             <div class="flex items-center gap-5">
                 <div class="w-14 h-14 rounded-2xl bg-slate-100 flex-shrink-0 flex items-center justify-center overflow-hidden shadow-inner border border-gray-100">
-                    @if($course->dosen->avatar)
+                    @if($course->dosen && $course->dosen->avatar)
                         <img src="{{ asset('storage/' . $course->dosen->avatar) }}" alt="{{ $course->dosen->name }}" class="w-full h-full object-cover">
                     @else
-                        <span class="text-slate-400 font-black text-xs uppercase">{{ strtoupper(substr($course->dosen->name, 0, 2)) }}</span>
+                        <span class="text-slate-400 font-black text-xs uppercase">{{ strtoupper(substr($course->dosen->name ?? 'DS', 0, 2)) }}</span>
                     @endif
                 </div>
                 <div class="flex flex-col">
                     <span class="text-[9px] text-gray-400 uppercase font-black tracking-widest mb-1">Dosen Pengampu</span>
-                    <span class="font-black text-gray-900 text-sm leading-tight uppercase">{{ $course->dosen->name }}</span>
-                    <span class="text-[10px] text-indigo-500 font-mono font-bold tracking-tighter italic mt-0.5">NIP: {{ $course->dosen->id }}</span>
+                    <span class="font-black text-gray-900 text-sm leading-tight uppercase">{{ $course->dosen->name ?? '-' }}</span>
+                    <span class="text-[10px] text-emerald-600 font-mono font-bold tracking-tighter italic mt-0.5">NIP: {{ $course->dosen->id ?? '-' }}</span>
                 </div>
             </div>
 
@@ -38,16 +38,16 @@
 
             {{-- ASLAB --}}
             <div class="flex items-center gap-5 pb-2">
-                <div class="w-14 h-14 rounded-2xl bg-indigo-50 flex-shrink-0 flex items-center justify-center overflow-hidden shadow-inner border border-indigo-100">
-                    @if($course->aslab->avatar)
+                <div class="w-14 h-14 rounded-2xl bg-emerald-50 flex-shrink-0 flex items-center justify-center overflow-hidden shadow-inner border border-emerald-100">
+                    @if($course->aslab && $course->aslab->avatar)
                         <img src="{{ asset('storage/' . $course->aslab->avatar) }}" alt="{{ $course->aslab->name }}" class="w-full h-full object-cover">
                     @else
-                        <span class="text-indigo-400 font-black text-xs uppercase">{{ strtoupper(substr($course->aslab->name, 0, 2)) }}</span>
+                        <span class="text-emerald-600 font-black text-xs uppercase">{{ strtoupper(substr($course->aslab->name ?? 'AS', 0, 2)) }}</span>
                     @endif
                 </div>
                 <div class="flex flex-col">
                     <span class="text-[9px] text-gray-400 uppercase font-black tracking-widest mb-1">Asisten Laboratorium</span>
-                    <span class="font-black text-indigo-600 text-sm leading-tight uppercase">{{ $course->aslab->name }}</span>
+                    <span class="font-black text-emerald-700 text-sm leading-tight uppercase">{{ $course->aslab->name ?? '-' }}</span>
                 </div>
             </div>
         </div>
@@ -58,7 +58,7 @@
                 $hadirCount = 0;
                 foreach($course->meetings as $mtg) {
                     $att = $mtg->attendances->where('student_id', auth()->id())->first();
-                    if($att && strtoupper($att->status) === 'HADIR') {
+                    if($att && in_array(strtoupper($att->status), ['HADIR', 'H'])) {
                         $hadirCount++;
                     }
                 }
@@ -85,19 +85,29 @@
             </div>
         @else
             <div class="mt-8 pt-8 border-t border-gray-50 space-y-3">
-                <a href="{{ route('attendance.report', $course->id) }}" class="w-full flex items-center justify-center gap-2 px-4 py-4 bg-indigo-50 text-indigo-700 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition border border-indigo-100 shadow-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <a href="{{ route('attendance.report', $course->id) }}" class="w-full flex items-center justify-center gap-2 px-4 py-4 bg-emerald-50 text-emerald-800 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition border border-emerald-200 shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 01-2-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     Rekap Presensi
                 </a>
             </div>
         @endif
 
-        {{-- Tombol Daftar Mahasiswa (Muncul untuk semua Role) --}}
+        {{-- Tombol Peserta Kelas --}}
         <div class="{{ strtoupper(auth()->user()->active_role) === 'MAHASISWA' ? 'mt-4' : 'mt-3' }}">
             <a href="{{ route('courses.students', $course->id) }}" class="w-full flex items-center justify-center gap-2 px-4 py-4 bg-slate-50 text-slate-700 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition border border-slate-200 shadow-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                 Peserta Kelas
             </a>
         </div>
+
+        {{-- TOMBOL CETAK KARTU PRAKTIKUM (Khusus Mahasiswa) --}}
+        @if(strtoupper(auth()->user()->active_role) === 'MAHASISWA')
+            <div class="mt-3">
+                <a href="{{ route('courses.print-card', $course->id) }}" target="_blank" class="w-full flex items-center justify-center gap-2 px-4 py-4 bg-amber-500 text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-400 transition shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2z"></path></svg>
+                    Cetak Kartu Praktikum
+                </a>
+            </div>
+        @endif
     </div>
 </div>

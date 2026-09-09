@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class CourseController extends Controller
 {
@@ -163,5 +164,37 @@ public function store(Request $request)
         }
         
         return back()->with('error', 'Anda tidak memiliki hak akses untuk aksi ini.');
+    }
+
+    public function printCard(int|string $id)
+    {
+        $student = auth()->user();
+
+        if (strtoupper($student->active_role) !== 'MAHASISWA') {
+            return redirect()->back()->with('error', 'Hanya mahasiswa yang dapat mencetak Kartu Praktikum.');
+        }
+
+        $course = Course::with(['dosen', 'laboran', 'aslab', 'semester'])->findOrFail($id);
+
+        // Load meetings beserta attendances & submissions milik mahasiswa yang bersangkutan
+        $meetings = $course->meetings()
+            ->with([
+                'attendances' => function ($q) use ($student) {
+                    $q->where('student_id', $student->id);
+                },
+                'submissions' => function ($q) use ($student) {
+                    $q->where('student_id', $student->id);
+                }
+            ])
+            ->orderBy('meeting_number', 'asc')
+            ->get();
+
+        $pdf = Pdf::loadView('courses.practicum_card_pdf', [
+            'course'   => $course,
+            'student'  => $student,
+            'meetings' => $meetings,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->stream('Kartu_Praktikum_' . Str::slug($student->name) . '.pdf');
     }
 }

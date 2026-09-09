@@ -196,6 +196,10 @@ class FinalTaskController extends Controller
                 }
 
                 if ($statusInput === 'ACC') {
+                    $submission->laboran_status = 'ACC';
+                    $submission->laboran_acc_at = $now;
+                    
+                    // TAMBAHKAN BARIS INI JIKA INGIN DOSEN OTOMATIS ACC:
                     $submission->dosen_status = 'ACC';
                     $submission->dosen_acc_at = $now;
                 } else {
