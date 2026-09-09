@@ -35,7 +35,7 @@
                             <th class="px-6 py-4 text-center">Hadir</th>
                             <th class="px-6 py-4 text-center">Sakit</th>
                             <th class="px-6 py-4 text-center">Izin</th>
-                            <th class="px-6 py-4 text-center">Alpha</th>
+                            <th class="px-6 py-4 text-center">Tanpa Keterangan</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50">
@@ -53,7 +53,7 @@
                             </td>
                             
                             {{-- Radio Buttons Logic --}}
-                            @foreach(['Hadir' => 'emerald', 'Sakit' => 'blue', 'Izin' => 'amber', 'Alpha' => 'red'] as $status => $color)
+                            @foreach(['Hadir' => 'emerald', 'Sakit' => 'blue', 'Izin' => 'amber', 'Tanpa Keterangan' => 'red'] as $status => $color)
                             <td class="px-6 py-4 text-center">
                                 <input type="radio" 
                                        name="attendances[{{ $student->id }}]" 

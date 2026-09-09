@@ -11,6 +11,7 @@ use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\FinalTaskController;
+use App\Http\Controllers\TutorialController;
 
 // 1. Rute Publik
 Route::get('/', function () {
@@ -151,6 +152,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Route untuk halaman daftar submission yang pending (untuk reviewer)
     Route::get('/submissions/pending', [App\Http\Controllers\SubmissionController::class, 'pending'])->name('submissions.pending');
+
+    Route::get('/courses/{course}/attendance-report/pdf', [App\Http\Controllers\AttendanceController::class, 'exportPdf'])->name('attendance.report.pdf');
+    Route::get('/courses/{course}/attendance-report/excel', [App\Http\Controllers\AttendanceController::class, 'exportExcel'])->name('attendance.report.excel');
+
+    Route::get('/tutorials', [TutorialController::class, 'index'])->name('tutorials.index');
+    Route::post('/tutorials', [TutorialController::class, 'store'])->name('tutorials.store');
+    Route::delete('/tutorials/{id}', [TutorialController::class, 'destroy'])->name('tutorials.destroy');
 });
 
 require __DIR__.'/auth.php';

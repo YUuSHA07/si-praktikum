@@ -5,16 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\FinalTask;
 use App\Models\Submission;
 use App\Models\SubmissionHistory;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 class FinalTaskController extends Controller
 {
     /**
      * TAMPILAN REVIEWER: Daftar pengumpulan mahasiswa per tugas final
      */
-    public function index($final_task_id)
+    public function index(int|string $final_task_id): View
     {
         $finalTask = FinalTask::with('course.students')->findOrFail($final_task_id);
         
@@ -28,9 +30,31 @@ class FinalTaskController extends Controller
     }
 
     /**
+     * SIMPAN / UPDATE TUGAS FINAL (Membuat wadah tugas final baru untuk Course)
+     */
+    public function store(Request $request, int|string $course_id): RedirectResponse
+    {
+        $request->validate([
+            'description' => 'nullable|string',
+            'deadline'    => 'nullable|date',
+        ]);
+
+        // Menggunakan FinalTask::query() memutus salah paham stubs di Intelephense
+        FinalTask::query()->updateOrCreate(
+            ['course_id' => $course_id],
+            [
+                'description' => $request->description,
+                'deadline'    => $request->deadline,
+            ]
+        );
+
+        return redirect()->back()->with('success', 'Tugas Final berhasil diperbarui!');
+    }
+
+    /**
      * PROSES MAHASISWA: Simpan Tugas Baru
      */
-    public function submit(Request $request, $final_task_id)
+    public function submit(Request $request, int|string $final_task_id): RedirectResponse
     {
         $request->validate([
             'submission_link' => 'required|url',
@@ -42,6 +66,7 @@ class FinalTaskController extends Controller
             return back()->with('error', 'Waktu pengumpulan sudah ditutup.');
         }
 
+        /** @var Submission|null $submission */
         $submission = Submission::where('final_task_id', $final_task_id)
                                 ->where('student_id', Auth::id())
                                 ->where('is_final', true)
@@ -75,22 +100,25 @@ class FinalTaskController extends Controller
     /**
      * PROSES MAHASISWA: Update atau Kirim Revisi
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, int|string $id): RedirectResponse
     {
         $request->validate([
             'submission_link' => 'required|url',
         ]);
 
+        /** @var Submission $submission */
         $submission = Submission::with('finalTask')->where('id', $id)
                                 ->where('student_id', Auth::id())
                                 ->firstOrFail();
 
         // LOGIKA: Jika sudah ACC, pertahankan. Jika REVISI/PENDING, ubah jadi PENDING.
-        $newAslabStatus = (strtoupper($submission->aslab_status) === 'ACC') ? 'ACC' : 'PENDING';
-        $newLaboranStatus = (strtoupper($submission->laboran_status) === 'ACC') ? 'ACC' : 'PENDING';
-        $newDosenStatus = (strtoupper($submission->dosen_status) === 'ACC') ? 'ACC' : 'PENDING';
+        $newAslabStatus   = (strtoupper((string) $submission->aslab_status) === 'ACC') ? 'ACC' : 'PENDING';
+        $newLaboranStatus = (strtoupper((string) $submission->laboran_status) === 'ACC') ? 'ACC' : 'PENDING';
+        $newDosenStatus   = (strtoupper((string) $submission->dosen_status) === 'ACC') ? 'ACC' : 'PENDING';
 
-        $submission->update([
+        /** @var \Illuminate\Database\Eloquent\Model $submissionModel */
+        $submissionModel = $submission;
+        $submissionModel->update([
             'submission_link' => $request->submission_link,
             'notes'           => $request->notes,
             'aslab_status'    => $newAslabStatus,
@@ -106,9 +134,9 @@ class FinalTaskController extends Controller
     /**
      * PROSES REVIEWER: Memberi ACC atau REVISI
      */
-    public function approve(Request $request, $id)
+    public function approve(Request $request, int|string $id): mixed
     {
-        $statusInput = strtoupper($request->status);
+        $statusInput = strtoupper((string) $request->status);
 
         $request->validate([
             'status' => 'required|in:ACC,REVISI',
@@ -116,16 +144,19 @@ class FinalTaskController extends Controller
         ]);
 
         return DB::transaction(function () use ($request, $id, $statusInput) {
+            /** @var Submission $submission */
             $submission = Submission::lockForUpdate()->findOrFail($id);
-            $user = Auth::user();
+            $user = $request->user();
             $now = now();
-            $role = strtoupper($user->role);
+            
+            $role = strtoupper((string) ($user->active_role ?? $user->role));
 
-            // Jika status baru sama dengan status lama (khusus REVISI), batalkan proses agar tidak double history
-            $currentStatus = '';
-            if ($role === 'ASLAB') $currentStatus = strtoupper($submission->aslab_status);
-            elseif ($role === 'LABORAN') $currentStatus = strtoupper($submission->laboran_status);
-            elseif ($role === 'DOSEN') $currentStatus = strtoupper($submission->dosen_status);
+            $currentStatus = match($role) {
+                'ASLAB'   => strtoupper((string) $submission->aslab_status),
+                'LABORAN' => strtoupper((string) $submission->laboran_status),
+                'DOSEN'   => strtoupper((string) $submission->dosen_status),
+                default   => ''
+            };
 
             if ($currentStatus === $statusInput && $statusInput === 'REVISI') {
                 return redirect()->back()->with('info', "Status sudah ditandai sebagai REVISI.");
@@ -145,7 +176,7 @@ class FinalTaskController extends Controller
                     $submission->dosen_acc_at = null;
                 }
             } elseif ($role === 'LABORAN') {
-                if (strtoupper($submission->aslab_status) !== 'ACC') {
+                if (strtoupper((string) $submission->aslab_status) !== 'ACC') {
                     return back()->with('error', 'Menunggu verifikasi Asisten Laboratorium.');
                 }
 
@@ -160,7 +191,7 @@ class FinalTaskController extends Controller
                     $submission->dosen_acc_at = null;
                 }
             } elseif ($role === 'DOSEN') {
-                if (strtoupper($submission->aslab_status) !== 'ACC' || strtoupper($submission->laboran_status) !== 'ACC') {
+                if (strtoupper((string) $submission->aslab_status) !== 'ACC' || strtoupper((string) $submission->laboran_status) !== 'ACC') {
                     return back()->with('error', 'Menunggu verifikasi Aslab & Laboran.');
                 }
 
@@ -174,11 +205,10 @@ class FinalTaskController extends Controller
                 }
             }
 
-            // Hitung ulang is_completed
             $submission->is_completed = (
-                strtoupper($submission->aslab_status) === 'ACC' && 
-                strtoupper($submission->laboran_status) === 'ACC' && 
-                strtoupper($submission->dosen_status) === 'ACC'
+                strtoupper((string) $submission->aslab_status) === 'ACC' && 
+                strtoupper((string) $submission->laboran_status) === 'ACC' && 
+                strtoupper((string) $submission->dosen_status) === 'ACC'
             );
 
             $submission->save();
@@ -187,14 +217,14 @@ class FinalTaskController extends Controller
         });
     }
 
-    public function handler($id)
+    public function handler(int|string $id): View
     {
         $submission = Submission::with(['student', 'histories'])->findOrFail($id);
         $finalTask = $submission->finalTask;
         return view('final-tasks.handler', compact('submission', 'finalTask'));
     }
 
-    public function manage($id)
+    public function manage(int|string $id): View
     {
         $finalTask = FinalTask::with('course')->findOrFail($id);
         $submission = Submission::where('final_task_id', $id)
@@ -207,21 +237,26 @@ class FinalTaskController extends Controller
 
     /**
      * UPDATE DEADLINE
-     * PERBAIKAN: Menghapus "after:now" agar deadline bebas diset ke kapan pun
      */
-    public function updateDeadline(Request $request, $id)
+    public function updateDeadline(Request $request, int|string $id): RedirectResponse
     {
         $request->validate([
             'deadline' => 'required|date' 
         ]);
         
         $finalTask = FinalTask::findOrFail($id);
-        $finalTask->update(['deadline' => $request->deadline]);
+
+        /** @var \Illuminate\Database\Eloquent\Model $finalTaskModel */
+        $finalTaskModel = $finalTask;
+        $finalTaskModel->update(['deadline' => $request->deadline]);
         
         return redirect()->back()->with('success', 'Deadline diperbarui!');
     }
 
-    private function createHistory($submission, $notes) 
+    /**
+     * HELPER: Simpan Riwayat
+     */
+    private function createHistory(Submission $submission, ?string $notes): SubmissionHistory
     {
         return SubmissionHistory::create([
             'submission_id' => $submission->id,
@@ -233,15 +268,17 @@ class FinalTaskController extends Controller
     }
 
     /**
- * Update hanya deskripsi tugas final.
- */
-    public function updateDescription(Request $request, \App\Models\FinalTask $finalTask)
+     * Update hanya deskripsi tugas final.
+     */
+    public function updateDescription(Request $request, FinalTask $finalTask): RedirectResponse
     {
         $request->validate([
             'description' => 'required|string',
         ]);
 
-        $finalTask->update([
+        /** @var \Illuminate\Database\Eloquent\Model $finalTaskModel */
+        $finalTaskModel = $finalTask;
+        $finalTaskModel->update([
             'description' => $request->description,
         ]);
 
